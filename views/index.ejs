@@ -1,0 +1,534 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anime Downloader</title>
+  <link rel="stylesheet" href="/styles-tailwind.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-body text-text">
+  <header class="header">
+    <div class="container flex items-center justify-between py-4 lg:py-6">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-play-circle text-2xl text-main"></i>
+          <h1 class="text-lead font-bold text-xl">Anime<span class="text-main">Hub</span></h1>
+        </div>
+        
+        <form method="get" action="/search" class="hidden lg:flex items-center bg-soft border border-line rounded-lg px-4 py-2 w-72">
+          <i class="fas fa-search text-subs mr-3 cursor-pointer" id="search-icon"></i>
+          <input type="search" name="q" id="search-input" placeholder="Buscar anime..." class="bg-transparent border-none outline-none text-text placeholder-subs flex-1">
+          <a href="https://animeav1.com/catalogo" target="_blank" class="btn-xs bg-line text-subs rounded ml-2">
+            <i class="fas fa-sliders-h"></i> Filtros
+          </a>
+        </form>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button class="lg:hidden btn btn-sm border-line" id="mobile-search-btn">
+          <i class="fas fa-search"></i>
+        </button>
+        <nav class="hidden lg:flex items-center gap-2">
+          <a href="https://animeav1.com/horario" target="_blank" class="btn-secondary btn-sm">
+            <i class="fas fa-calendar"></i> Horario
+          </a>
+          <a href="https://animeav1.com/catalogo" target="_blank" class="btn-secondary btn-sm">
+            <i class="fas fa-th-large"></i> Catálogo
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Carousel -->
+  <% if (featuredAnimes && featuredAnimes.length > 0) { %>
+    <section class="relative mb-12 rounded-lg overflow-hidden shadow-2xl" style="height: 60vh; min-height: 400px;">
+      <div class="relative w-full h-full">
+        <div class="flex transform-gpu transition-transform duration-700 ease-in-out" id="carousel-slides">
+          <% featuredAnimes.forEach((anime, index) => { %>
+            <article class="relative w-full shrink-0 grid items-end text-subs">
+              <div class="container z-20 grid items-start gap-4 pb-12 pt-16">
+                <header class="grid items-start gap-4">
+                  <h1 class="text-4xl font-semibold text-lead"><%= anime.title %></h1>
+                  <div class="flex flex-wrap items-center gap-2 text-sm">
+                    <span><%= anime.type || 'TV Anime' %></span>
+                    <span>•</span>
+                    <span><%= anime.year || new Date().getFullYear() %></span>
+                    <span>•</span>
+                    <span class="<%= anime.status === 'En emisión' ? 'flex gap-2 after:h-1.5 after:w-1.5 after:animate-pulse after:rounded-full after:bg-wins after:ring-4 after:ring-wins/20' : '' %>"><%= anime.status || 'Desconocido' %></span>
+                  </div>
+                  <% if (anime.genres && anime.genres.length > 0) { %>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <% anime.genres.forEach(genre => { %>
+                        <a class="btn btn-xs rounded-full border-line bg-transparent text-subs hover:bg-main hover:text-fore" href="https://animeav1.com/catalogo?genre=<%= encodeURIComponent(genre.toLowerCase()) %>" target="_blank"><%= genre %></a>
+                      <% }); %>
+                    </div>
+                  <% } %>
+                </header>
+                <% if (anime.description) { %>
+                  <div class="max-w-lg text-lead line-clamp-4">
+                    <p><%= anime.description %></p>
+                  </div>
+                <% } %>
+                <div class="mt-2 flex flex-wrap gap-3">
+                  <a class="btn btn-primary" href="/media/<%= anime.slug %>">
+                    <i class="fas fa-play text-2xl"></i> Ver Anime
+                  </a>
+                </div>
+              </div>
+              <div class="absolute inset-0 z-10">
+                <figure class="absolute inset-0">
+                  <img class="h-full w-full object-cover" src="<%= anime.backdrop || anime.poster %>" alt="<%= anime.title %> Backdrop" loading="<%= index === 0 ? 'eager' : 'lazy' %>" onerror="this.style.display='none'"/>
+                  <div class="absolute inset-0 bg-gradient-to-r from-body/90 via-body/60 to-transparent"></div>
+                  <div class="absolute inset-0 bg-gradient-to-t from-body/80 via-transparent to-transparent"></div>
+                </figure>
+              </div>
+            </article>
+          <% }); %>
+        </div>
+        
+        <% if (featuredAnimes.length > 1) { %>
+          <div class="absolute inset-x-0 bottom-12 z-30 hidden items-end justify-between sm:flex container">
+            <div class="flex items-center gap-2">
+              <div class="flex gap-1" id="carousel-indicators">
+                <% featuredAnimes.forEach((anime, index) => { %>
+                  <button class="w-2 h-2 rounded-full bg-white/30 hover:bg-white/60 transition-colors carousel-indicator <%= index === 0 ? 'bg-white' : '' %>" data-slide="<%= index %>"></button>
+                <% }); %>
+              </div>
+              <div class="text-xs text-white/70 ml-2" id="carousel-counter">
+                <span id="current-slide">1</span> / <span id="total-slides"><%= featuredAnimes.length %></span>
+              </div>
+              <div class="w-16 h-1 bg-white/20 rounded-full ml-2 overflow-hidden">
+                <div class="h-full bg-main rounded-full transition-all duration-100 ease-linear" id="progress-bar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-sm border-line p-2 text-xl hover:bg-main hover:text-fore" id="carousel-prev">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="btn btn-sm border-line p-2 text-xl hover:bg-main hover:text-fore" id="carousel-next">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
+
+  <main class="py-6">
+    <div class="container">
+      <!-- Recent Episodes Section -->
+      <section class="grid items-start gap-4 py-3" id="recent-episodes">
+        <header class="flex flex-wrap items-center justify-between gap-4">
+          <div class="grid items-start gap-1">
+            <h2 class="text-2xl font-bold text-lead">Episodios</h2>
+            <p class="text-xs font-bold uppercase tracking-widest text-subs">Recientemente Actualizado</p>
+          </div>
+        </header>
+        
+        <% if (recentEpisodes && recentEpisodes.length > 0) { %>
+          <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
+            <% recentEpisodes.forEach((episode, index) => { %>
+              <article class="group/item relative text-text bg-soft rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="relative">
+                  <figure class="bg-black">
+                    <img class="aspect-video w-full object-cover transition-all group-hover/item:opacity-75" src="<%= episode.poster %>" alt="<%= episode.title %>" loading="lazy" onerror="this.src='/placeholder-episode.jpg'"/>
+                    <% if (episode.timeAgo) { %>
+                      <span class="absolute inset-0 grid place-content-end rounded-lg bg-gradient-to-tl from-soft px-3 py-2 text-xs font-bold text-subs"><%= episode.timeAgo %></span>
+                    <% } %>
+
+                  </figure>
+                  <% if (episode.episodeNumber) { %>
+                    <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-current pe-1 pt-1 sm:pe-2 sm:pt-2">
+                      <div class="rounded bg-line px-2 py-1 text-xs font-bold text-subs">EP <span class="font-bold text-lead"><%= episode.episodeNumber %></span></div>
+                    </div>
+                  <% } %>
+                  <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <button class="download-episode-btn bg-main hover:bg-main/80 text-fore w-12 h-12 rounded-full transition-all duration-200 flex items-center justify-center" data-title="<%= episode.title %>" data-link="<%= episode.link %>" title="Descargar <%= episode.title %>">
+                      <i class="fas fa-download text-xl"></i>
+                    </button>
+                  </div>
+                </div>
+                <header class="grid items-start gap-1 p-2">
+                  <div class="text-xs font-bold uppercase text-subs line-clamp-2"><%= episode.title %></div>
+                </header>
+              </article>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-12">
+            <i class="fas fa-film text-4xl text-subs mb-4"></i>
+            <p class="text-subs">No hay episodios recientes disponibles</p>
+          </div>
+        <% } %>
+      </section>
+
+      <!-- Recent Animes Section -->
+      <section class="grid items-start gap-6 py-3">
+        <header class="flex flex-wrap items-center justify-between gap-4">
+          <div class="grid items-start gap-1">
+            <h2 class="text-2xl font-bold text-lead">Animes</h2>
+            <p class="text-xs font-bold uppercase tracking-widest text-subs">Recientemente Agregados</p>
+          </div>
+          <div>
+            <a class="btn btn-sm border-line" href="https://animeav1.com/catalogo" target="_blank">
+              <i class="fas fa-th-large text-xl"></i> Catálogo de Animes
+            </a>
+          </div>
+        </header>
+        
+        <% if (recentAnimes && recentAnimes.length > 0) { %>
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 xl:gap-6">
+            <% recentAnimes.forEach((anime, index) => { %>
+              <article class="group/item relative text-text">
+                <div class="relative bg-current">
+                  <figure class="rounded-lg bg-black">
+                    <img class="aspect-poster w-full rounded-lg object-cover" src="<%= anime.poster %>" alt="Portada de <%= anime.title %>" onerror="this.src='/placeholder-anime.jpg'"/>
+                  </figure>
+                  <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-current pe-2 pt-2">
+                    <div class="rounded bg-line px-2 py-1 text-xs font-bold text-subs"><%= anime.type || 'TV Anime' %></div>
+                  </div>
+                </div>
+                <header class="grid items-start gap-1 p-2">
+                  <h3 class="line-clamp-2 text-sm font-bold text-lead"><%= anime.title %></h3>
+                </header>
+                <a class="absolute inset-0 z-20 grid place-content-center" href="/media/<%= anime.slug %>" title="Ver <%= anime.title %>">
+                  <span class="sr-only">Ver <%= anime.title %></span>
+                </a>
+              </article>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-12">
+            <i class="fas fa-tv text-4xl text-subs mb-4"></i>
+            <p class="text-subs">No hay animes recientes disponibles</p>
+          </div>
+        <% } %>
+      </section>
+    </div>
+  </main>
+
+  <footer class="mt-auto">
+    <div class="container flex flex-col flex-wrap items-center justify-center gap-4 py-12 md:flex-row lg:justify-between">
+      <div class="flex flex-col items-center gap-x-6 gap-y-4 py-2 md:flex-row">
+        <figure>
+          <a href="/" class="flex items-center gap-2">
+            <i class="fas fa-play-circle text-main text-xl"></i>
+            <span class="font-bold text-lead">Anime<span class="text-main">Hub</span></span>
+          </a>
+        </figure>
+        <span class="inline-flex items-center gap-3 text-sm font-medium">
+          <i class="fas fa-heart text-main text-xl"></i> By fans for fans
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/scripts.js"></script>
+  
+  <!-- Script para reintento de imágenes -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('img').forEach(img => {
+        let retries = 0;
+        const maxRetries = 3;
+        
+        img.addEventListener('error', function() {
+          if (retries < maxRetries) {
+            retries++;
+            setTimeout(() => {
+              this.src = this.src + (this.src.includes('?') ? '&' : '?') + 't=' + Date.now();
+            }, 1000 * retries);
+          }
+        });
+      });
+    });
+  </script>
+  
+  <!-- Script adicional para manejar búsqueda -->
+  <!-- Mobile Search Modal -->
+  <div class="fixed inset-0 bg-black/50 z-50 hidden" id="mobile-search-modal">
+    <div class="absolute top-4 left-4 right-4 bg-soft border border-line rounded-lg p-4">
+      <form method="get" action="/search" class="flex gap-2">
+        <input 
+          type="search" 
+          name="q" 
+          placeholder="Buscar anime..." 
+          class="flex-1 bg-mute border border-line rounded-lg px-4 py-2 text-text placeholder-subs focus:border-main focus:outline-none"
+          id="mobile-search-input"
+        >
+        <button type="submit" class="px-4 py-2 bg-main text-fore rounded-lg hover:opacity-90">
+          <i class="fas fa-search"></i>
+        </button>
+        <button type="button" class="px-4 py-2 bg-line text-subs rounded-lg hover:bg-edge" id="close-mobile-search">
+          <i class="fas fa-times"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Mobile search modal
+    const mobileSearchBtn = document.getElementById('mobile-search-btn');
+    const mobileSearchModal = document.getElementById('mobile-search-modal');
+    const closeMobileSearch = document.getElementById('close-mobile-search');
+    
+    function openMobileSearch() {
+      if (mobileSearchModal) {
+        mobileSearchModal.classList.remove('hidden');
+        const input = document.getElementById('mobile-search-input');
+        if (input) input.focus();
+      }
+    }
+    
+    function closeMobileSearchModal() {
+      if (mobileSearchModal) {
+        mobileSearchModal.classList.add('hidden');
+      }
+    }
+    
+    if (mobileSearchBtn) mobileSearchBtn.addEventListener('click', openMobileSearch);
+    if (closeMobileSearch) closeMobileSearch.addEventListener('click', closeMobileSearchModal);
+    
+    // Close modal on backdrop click
+    if (mobileSearchModal) {
+      mobileSearchModal.addEventListener('click', function(e) {
+        if (e.target === mobileSearchModal) {
+          closeMobileSearchModal();
+        }
+      });
+    }
+    
+    // Desktop search
+    const searchInput = document.getElementById('search-input');
+    const searchIcon = document.getElementById('search-icon');
+    
+    if (searchInput) {
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          const form = this.closest('form');
+          if (form && this.value.trim()) form.submit();
+        }
+      });
+    }
+    
+    if (searchIcon) {
+      searchIcon.addEventListener('click', function() {
+        if (searchInput && searchInput.value.trim()) {
+          const form = searchInput.closest('form');
+          if (form) form.submit();
+        }
+      });
+    }
+    
+    // Carousel functionality
+    const carouselSlides = document.getElementById('carousel-slides');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    const indicators = document.querySelectorAll('.carousel-indicator');
+    const currentSlideEl = document.getElementById('current-slide');
+    
+    if (carouselSlides && prevBtn && nextBtn) {
+      let currentSlide = 0;
+      const slides = carouselSlides.children;
+      const totalSlides = slides.length;
+      let autoPlayInterval;
+      
+      function updateIndicators() {
+        indicators.forEach((indicator, index) => {
+          if (index === currentSlide) {
+            indicator.classList.add('bg-white');
+            indicator.classList.remove('bg-white/30');
+          } else {
+            indicator.classList.remove('bg-white');
+            indicator.classList.add('bg-white/30');
+          }
+        });
+        if (currentSlideEl) {
+          currentSlideEl.textContent = currentSlide + 1;
+        }
+      }
+      
+      function goToSlide(index) {
+        currentSlide = index;
+        carouselSlides.style.transform = `translateX(-${index * 100}%)`;
+        updateIndicators();
+      }
+      
+      function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        goToSlide(currentSlide);
+      }
+      
+      function prevSlide() {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        goToSlide(currentSlide);
+      }
+      
+      function startAutoPlay() {
+        if (totalSlides > 1) {
+          const progressBar = document.getElementById('progress-bar');
+          let progress = 0;
+          
+          const progressInterval = setInterval(() => {
+            progress += 2;
+            if (progressBar) {
+              progressBar.style.width = progress + '%';
+            }
+            if (progress >= 100) {
+              clearInterval(progressInterval);
+            }
+          }, 100);
+          
+          autoPlayInterval = setInterval(() => {
+            nextSlide();
+            progress = 0;
+            if (progressBar) {
+              progressBar.style.width = '0%';
+            }
+          }, 5000);
+        }
+      }
+      
+      function stopAutoPlay() {
+        if (autoPlayInterval) {
+          clearInterval(autoPlayInterval);
+        }
+      }
+      
+      prevBtn.addEventListener('click', () => {
+        stopAutoPlay();
+        prevSlide();
+        startAutoPlay();
+      });
+      
+      nextBtn.addEventListener('click', () => {
+        stopAutoPlay();
+        nextSlide();
+        startAutoPlay();
+      });
+      
+      // Indicator clicks
+      indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+          stopAutoPlay();
+          goToSlide(index);
+          startAutoPlay();
+        });
+      });
+      
+      // Pause on hover
+      carouselSlides.addEventListener('mouseenter', stopAutoPlay);
+      carouselSlides.addEventListener('mouseleave', startAutoPlay);
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          stopAutoPlay();
+          prevSlide();
+          startAutoPlay();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          stopAutoPlay();
+          nextSlide();
+          startAutoPlay();
+        }
+      });
+      
+      // Initialize
+      updateIndicators();
+      startAutoPlay();
+    }
+    
+    // Toast notification function
+    function showToast(message, isError = false) {
+      let toast = document.getElementById('main-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'main-toast';
+        toast.className = 'fixed bottom-4 right-4 z-50 hidden';
+        toast.innerHTML = `
+          <div class="bg-soft border border-line rounded-lg p-4 shadow-lg max-w-sm">
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-info" id="main-toast-icon"></i>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm text-text" id="main-toast-message">Mensaje</p>
+              </div>
+              <button class="flex-shrink-0 text-subs hover:text-lead" id="main-toast-close">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(toast);
+        
+        document.getElementById('main-toast-close').addEventListener('click', () => {
+          toast.classList.add('hidden');
+        });
+      }
+      
+      const toastIcon = document.getElementById('main-toast-icon');
+      const toastMessage = document.getElementById('main-toast-message');
+      
+      if (isError) {
+        toastIcon.className = 'fas fa-exclamation-circle text-red-500';
+      } else {
+        toastIcon.className = 'fas fa-check-circle text-green-500';
+      }
+      
+      toastMessage.textContent = message;
+      toast.classList.remove('hidden');
+      
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+    
+    // Handle episode downloads
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.download-episode-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const btn = e.target.closest('.download-episode-btn');
+        const episodeTitle = btn.dataset.title;
+        const episodeLink = btn.dataset.link;
+        
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xl"></i>';
+        
+        fetch('/download-episode', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            episodeTitle, 
+            episodeLink 
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          showToast(data.message, !data.success);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('Error al procesar la descarga', true);
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerHTML = originalContent;
+        });
+      }
+    });
+  </script>
+</body>
+</html>

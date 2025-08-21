@@ -1,0 +1,356 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fuentes personalizadas */
+@import url('https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&display=swap');
+
+/* Variables CSS personalizadas */
+:root {
+  --body: 19, 19, 23;
+  --text: 135, 138, 168;
+  --lead: 255, 255, 255;
+  --subs: 167, 172, 209;
+  --fore: 0, 0, 0;
+  --main: 60, 236, 214;
+  --tone: 192, 132, 252;
+  --mark: 251, 146, 60;
+  --mute: 26, 27, 37;
+  --soft: 33, 36, 51;
+  --line: 48, 52, 74;
+  --edge: 64, 69, 98;
+  --fire: 248, 113, 113;
+  --warn: 216, 195, 111;
+  --wins: 74, 222, 128;
+  --info: 96, 165, 250;
+  --back: 26, 27, 37;
+}
+
+/* Estilos base */
+@layer base {
+  html {
+    font-size: 14px;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Satoshi', 'Inter', sans-serif;
+    background-color: rgb(var(--body));
+    color: rgb(var(--text));
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  * {
+    min-width: 0;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: rgb(var(--lead));
+  }
+  
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  button {
+    cursor: pointer;
+  }
+  
+  input, textarea, select {
+    font-family: inherit;
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Componentes personalizados */
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container { max-width: 640px; }
+  }
+  
+  @media (min-width: 768px) {
+    .container { max-width: 768px; }
+  }
+  
+  @media (min-width: 1024px) {
+    .container { max-width: 1024px; }
+  }
+  
+  @media (min-width: 1280px) {
+    .container { max-width: 1280px; }
+  }
+  
+  @media (min-width: 1536px) {
+    .container { max-width: 1536px; }
+  }
+  
+  /* Botones */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    transition: all 200ms;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-primary {
+    background-color: rgb(var(--main));
+    color: rgb(var(--fore));
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
+  .btn-secondary {
+    background-color: rgb(var(--soft));
+    color: rgb(var(--subs));
+    border-color: rgb(var(--line));
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    background-color: rgb(var(--line));
+    color: rgb(var(--lead));
+  }
+  
+  .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .btn-xs {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Cards de anime */
+  .anime-card {
+    background-color: rgb(var(--soft));
+    border: 1px solid rgb(var(--line));
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: all 300ms;
+  }
+  
+  .anime-card:hover {
+    border-color: rgb(var(--main));
+    transform: translateY(-0.25rem);
+  }
+  
+  /* Inputs */
+  .input {
+    background-color: rgb(var(--mute));
+    border: 1px solid rgb(var(--line));
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: rgb(var(--text));
+    font-size: 0.875rem;
+    transition: border-color 200ms;
+  }
+  
+  .input::placeholder {
+    color: rgb(var(--subs));
+  }
+  
+  .input:focus {
+    border-color: rgb(var(--main));
+    outline: none;
+  }
+  
+  /* Utilidades de texto */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  
+  .line-clamp-4 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+  
+  .line-clamp-6 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6;
+  }
+  
+  /* Efectos de gradiente */
+  .bg-gradient-to-tl {
+    background-image: linear-gradient(to top left, var(--tw-gradient-stops));
+  }
+  
+  .from-soft {
+    --tw-gradient-from: rgb(var(--soft));
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
+  }
+  
+  /* Aspect ratios */
+  .aspect-poster {
+    aspect-ratio: 1 / 1.5;
+  }
+  
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* Utilidades personalizadas */
+@layer utilities {
+  .bg-radial-closest-side {
+    background-image: radial-gradient(closest-side, var(--tw-gradient-stops));
+  }
+  
+  .from-mute {
+    --tw-gradient-from: rgb(var(--mute));
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, transparent);
+  }
+  
+  /* Efectos de máscara para el hero */
+  .bg-cut-l {
+    mask: linear-gradient(to left, rgb(var(--body)), transparent);
+    -webkit-mask: linear-gradient(to left, rgb(var(--body)), transparent);
+  }
+  
+  .bg-cut-r {
+    mask: linear-gradient(to right, rgb(var(--body)), transparent);
+    -webkit-mask: linear-gradient(to right, rgb(var(--body)), transparent);
+  }
+  
+  .bg-cut-y {
+    mask: linear-gradient(to top, transparent, rgb(var(--body)) 50%, transparent);
+    -webkit-mask: linear-gradient(to top, transparent, rgb(var(--body)) 50%, transparent);
+  }
+  
+  /* Scrollbar personalizado */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgb(var(--mute));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(var(--line));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--edge));
+  }
+  
+  /* Animaciones personalizadas */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(100%); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateZ(0); 
+    }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.2s both;
+  }
+  
+  .animate-fadeUp {
+    animation: fadeUp 0.2s both;
+  }
+}
+
+/* Estilos específicos para el carousel */
+#carousel-slides {
+  transition: transform 0.5s ease-in-out;
+}
+
+/* Estilos para checkboxes personalizados */
+input[type="checkbox"]:checked {
+  background-color: rgb(var(--main));
+  border-color: rgb(var(--main));
+}
+
+input[type="checkbox"]:checked::before {
+  content: "✓";
+  display: block;
+  text-align: center;
+  color: rgb(var(--fore));
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* Responsive utilities */
+@media (max-width: 1023px) {
+  .lg\:hidden {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:block {
+    display: block !important;
+  }
+  
+  .lg\:flex {
+    display: flex !important;
+  }
+  
+  .lg\:grid {
+    display: grid !important;
+  }
+}

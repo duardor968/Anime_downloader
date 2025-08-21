@@ -1,0 +1,371 @@
+<!-- views/anime.ejs -->
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= anime.title %> - AnimeHub</title>
+  <link rel="stylesheet" href="/styles-tailwind.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+</head>
+<body class="bg-body text-text font-satoshi min-h-screen flex flex-col">
+  <header class="bg-body sticky top-0 z-40 border-b border-line/20">
+    <div class="container relative flex items-center justify-between gap-6 py-4 lg:py-6">
+      <div class="flex flex-1 gap-6 xl:flex-none">
+        <figure>
+          <a href="/" class="flex items-center gap-3">
+            <i class="fas fa-play-circle text-2xl text-main"></i>
+            <span class="text-lead font-bold text-xl">Anime<span class="text-main">Hub</span></span>
+          </a>
+        </figure>
+      </div>
+      
+      <nav class="hidden lg:flex">
+        <ul class="flex gap-1">
+          <li>
+            <a class="flex items-center gap-2 px-3 py-2 text-sm text-subs hover:text-lead hover:bg-soft rounded-lg transition-colors" href="/">
+              <i class="fas fa-home"></i>
+              <span>Inicio</span>
+            </a>
+          </li>
+          <li>
+            <a class="flex items-center gap-2 px-3 py-2 text-sm text-subs hover:text-lead hover:bg-soft rounded-lg transition-colors" href="/horario">
+              <i class="fas fa-calendar"></i>
+              <span>Horario</span>
+            </a>
+          </li>
+          <li>
+            <a class="flex items-center gap-2 px-3 py-2 text-sm text-subs hover:text-lead hover:bg-soft rounded-lg transition-colors" href="/catalogo">
+              <i class="fas fa-th-large"></i>
+              <span>Catálogo</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="py-6">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div class="flex items-center gap-2 text-sm text-subs mb-6">
+        <a href="/" class="text-main hover:text-lead transition-colors">Inicio</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span><%= anime.title %></span>
+      </div>
+      
+      <!-- Anime Hero Section -->
+      <section class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start mb-12">
+        <div class="flex justify-center lg:justify-start">
+          <% if (anime.poster) { %>
+            <img class="w-full max-w-80 lg:w-full h-auto rounded-lg shadow-lg" src="<%= anime.poster %>" alt="<%= anime.title %>">
+          <% } else { %>
+            <div class="w-full max-w-80 lg:w-full aspect-poster bg-soft rounded-lg flex items-center justify-center">
+              <i class="fas fa-image text-4xl text-line"></i>
+            </div>
+          <% } %>
+        </div>
+        
+        <div class="flex flex-col gap-6">
+          <div>
+            <h1 class="text-4xl font-bold text-lead mb-2"><%= anime.title %></h1>
+            <% if (anime.alternativeTitle) { %>
+              <h2 class="text-lg text-subs italic"><%= anime.alternativeTitle %></h2>
+            <% } %>
+          </div>
+          
+          <div class="flex flex-wrap gap-2">
+            <% if (anime.type) { %>
+              <span class="bg-main text-fore px-3 py-1 rounded-full text-sm font-medium">
+                <%= anime.type %>
+              </span>
+            <% } %>
+            
+            <% if (anime.year) { %>
+              <span class="bg-soft text-subs border border-line px-3 py-1 rounded-full text-sm font-medium">
+                <%= anime.year %>
+              </span>
+            <% } %>
+            
+            <% if (anime.status) { %>
+              <span class="<%= anime.status === 'En emisión' ? 'bg-wins text-fore animate-pulse' : 'bg-soft text-subs border border-line' %> px-3 py-1 rounded-full text-sm font-medium">
+                <%= anime.status %>
+              </span>
+            <% } %>
+            
+            <span class="bg-info text-fore px-3 py-1 rounded-full text-sm font-medium">
+              <%= anime.totalEpisodes %> Episodios
+            </span>
+          </div>
+          
+          <% if (anime.malRating && anime.malRating !== '0.0') { %>
+            <div class="flex items-center gap-4 p-4 bg-soft border border-line rounded-lg">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-star text-warn text-xl"></i>
+                <span class="text-xl font-bold text-lead"><%= anime.malRating %></span>
+                <span class="text-xs text-subs uppercase">MAL</span>
+              </div>
+              <% if (anime.malVotes && anime.malVotes !== '0') { %>
+                <div class="text-sm text-subs">
+                  <span><%= anime.malVotes %> votos</span>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+          
+          <% if (anime.genres && anime.genres.length > 0) { %>
+            <div class="flex flex-wrap gap-2">
+              <% anime.genres.forEach(genre => { %>
+                <span class="bg-transparent border border-line text-subs px-3 py-1 rounded-full text-sm hover:bg-main hover:text-fore hover:border-main transition-all cursor-pointer"><%= genre %></span>
+              <% }); %>
+            </div>
+          <% } %>
+          
+          <% if (anime.description) { %>
+            <div class="bg-soft border border-line rounded-lg p-4">
+              <p class="text-sm leading-relaxed text-text"><%= anime.description %></p>
+            </div>
+          <% } %>
+          
+          <div class="flex flex-wrap gap-3">
+            <button class="inline-flex items-center gap-2 px-6 py-3 bg-main text-fore font-bold rounded-lg hover:opacity-90 transition-opacity" id="downloadAllBtn">
+              <i class="fas fa-download"></i>
+              <span>Descargar Todo</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Related Animes Timeline -->
+      <% if (anime.relatedAnimes && anime.relatedAnimes.length > 0) { %>
+        <section class="related-timeline">
+          <div class="section-header">
+            <h2 class="section-title">
+              <i class="fas fa-link"></i>
+              Relacionados
+            </h2>
+          </div>
+          
+          <div class="timeline-container">
+            <div class="timeline-scroll">
+              <% anime.relatedAnimes.forEach((related, index) => { %>
+                <div class="timeline-group">
+                  <div class="timeline-year">
+                    <%= related.year || new Date().getFullYear() %>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-poster">
+                      <% if (related.poster) { %>
+                        <img src="<%= related.poster %>" alt="<%= related.title %>">
+                      <% } else { %>
+                        <div class="timeline-placeholder">
+                          <i class="fas fa-image"></i>
+                        </div>
+                      <% } %>
+                    </div>
+                    <div class="timeline-info">
+                      <h3 class="timeline-title"><%= related.title %></h3>
+                      <span class="timeline-type"><%= related.type %></span>
+                    </div>
+                    <a href="/media/<%= related.slug %>" class="timeline-link">
+                      <span class="sr-only">ver <%= related.title %></span>
+                    </a>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </section>
+      <% } %>
+
+      <!-- Episodes Section -->
+      <section class="mt-12">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 p-4 bg-soft border border-line rounded-lg">
+          <h2 class="text-xl font-semibold text-lead flex items-center gap-3">
+            <i class="fas fa-play-circle"></i>
+            <span>Episodios</span>
+            <span class="text-sm text-subs">(<%= anime.totalEpisodes %>)</span>
+          </h2>
+          
+          <div class="flex items-center gap-3 flex-wrap">
+            <% if (anime.episodeRanges && anime.episodeRanges.length > 1) { %>
+              <select id="episodeRange" class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text focus:border-main focus:outline-none">
+                <% anime.episodeRanges.forEach(range => { %>
+                  <option value="<%= range.start %>-<%= range.end %>"><%= range.label %></option>
+                <% }); %>
+              </select>
+            <% } %>
+            
+            <div class="flex items-center gap-2">
+              <input type="text" id="episodeSearch" placeholder="Buscar episodio..." class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text placeholder-subs focus:border-main focus:outline-none">
+            </div>
+            
+            <select id="episodeSort" class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text focus:border-main focus:outline-none">
+              <option value="asc">Episodio 1 → <%= anime.totalEpisodes %></option>
+              <option value="desc">Episodio <%= anime.totalEpisodes %> → 1</option>
+            </select>
+            
+            <button class="inline-flex items-center gap-2 px-3 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors text-sm" id="selectAllBtn">
+              <i class="fas fa-check-square"></i>
+              <span>Seleccionar Todo</span>
+            </button>
+          </div>
+        </div>
+
+        <% if (anime.episodes && anime.episodes.length > 0) { %>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="episodesContainer">
+            <% anime.episodes.forEach((episode, index) => { %>
+              <article class="group/item relative bg-soft border border-line rounded-lg overflow-hidden hover:border-main hover:-translate-y-1 transition-all" data-episode="<%= episode.number %>">
+                <div class="absolute top-3 left-3 z-10">
+                  <input type="checkbox" id="ep-<%= episode.number %>" value="<%= episode.link %>" class="w-5 h-5 bg-mute border-2 border-line rounded cursor-pointer checked:bg-main checked:border-main focus:outline-none focus:ring-2 focus:ring-main/20">
+                </div>
+                
+                <div class="relative h-40 overflow-hidden">
+                  <% if (episode.screenshot) { %>
+                    <img class="w-full h-full object-cover transition-transform group-hover/item:scale-105" src="<%= episode.screenshot %>" alt="<%= episode.title %>" loading="lazy">
+                  <% } else { %>
+                    <div class="w-full h-full bg-line flex items-center justify-center">
+                      <i class="fas fa-film text-2xl text-subs"></i>
+                    </div>
+                  <% } %>
+                  
+                  <div class="absolute bottom-3 right-3">
+                    <span class="bg-main text-fore px-2 py-1 rounded-full text-xs font-bold">
+                      Ep. <%= episode.number %>
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="p-4">
+                  <h3 class="text-sm font-semibold text-lead mb-2 line-clamp-2"><%= episode.title %></h3>
+                  <div class="flex items-center gap-3 text-xs text-subs mb-3">
+                    <span class="flex items-center gap-1">
+                      <i class="fas fa-clock"></i>
+                      <span>~24 min</span>
+                    </span>
+                  </div>
+                  
+                  <div class="flex gap-2">
+                    <button class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-main text-fore font-medium rounded-lg hover:opacity-90 transition-opacity flex-1 text-sm download-episode" data-link="<%= episode.link %>" data-title="<%= episode.title %>">
+                      <i class="fas fa-download"></i>
+                      <span>Descargar</span>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            <% }); %>
+          </div>
+          
+          <!-- Bulk Actions -->
+          <div class="sticky bottom-8 bg-soft border border-line rounded-lg p-4 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg z-50 hidden" id="bulkActions">
+            <div class="text-lead font-medium">
+              <span id="selectedCount">0</span> episodios seleccionados
+            </div>
+            <div class="flex gap-3">
+              <button class="inline-flex items-center gap-2 px-4 py-2 bg-main text-fore font-medium rounded-lg hover:opacity-90 transition-opacity" id="downloadSelectedBtn">
+                <i class="fas fa-download"></i>
+                <span>Descargar Seleccionados</span>
+              </button>
+              <button class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors" id="clearSelectionBtn">
+                <i class="fas fa-times"></i>
+                <span>Limpiar Selección</span>
+              </button>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="text-center py-16 bg-soft border border-line rounded-lg">
+            <div class="text-4xl mb-4 text-line">
+              <i class="fas fa-film"></i>
+            </div>
+            <h3 class="text-xl text-lead mb-2">No hay episodios disponibles</h3>
+            <p class="text-subs">Los episodios de este anime aún no están disponibles.</p>
+          </div>
+        <% } %>
+      </section>
+
+
+    </div>
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="fixed bottom-4 right-4 z-50 hidden" id="toast">
+    <div class="bg-soft border border-line rounded-lg p-4 shadow-lg max-w-sm">
+      <div class="flex items-center gap-3">
+        <div class="flex-shrink-0">
+          <i class="fas fa-info-circle text-info" id="toast-icon"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-sm text-text" id="toast-message">Mensaje</p>
+        </div>
+        <button class="flex-shrink-0 text-subs hover:text-lead" id="toast-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="mt-auto">
+    <div class="container flex flex-col flex-wrap items-center justify-center gap-4 py-12 md:flex-row lg:justify-between">
+      <div class="flex flex-col items-center gap-x-6 gap-y-4 py-2 md:flex-row">
+        <figure>
+          <a href="/" class="flex items-center gap-2">
+            <i class="fas fa-play-circle text-main text-xl"></i>
+            <span class="font-bold text-lead">Anime<span class="text-main">Hub</span></span>
+          </a>
+        </figure>
+        <span class="inline-flex items-center gap-3 text-sm font-medium">
+          <i class="fas fa-heart text-tone text-xl"></i> By fans for fans
+        </span>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Mobile Navigation -->
+  <nav class="bg-body sticky bottom-0 z-30 lg:hidden border-t border-line/20">
+    <div class="container flex px-0">
+      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-subs hover:text-main" href="/">
+        <i class="fas fa-home text-2xl mb-1"></i>
+        <span class="text-xs">Inicio</span>
+      </a>
+      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-subs hover:text-main" href="/catalogo">
+        <i class="fas fa-th-large text-2xl mb-1"></i>
+        <span class="text-xs">Catálogo</span>
+      </a>
+      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-subs hover:text-main" href="/horario">
+        <i class="fas fa-calendar text-2xl mb-1"></i>
+        <span class="text-xs">Horario</span>
+      </a>
+    </div>
+  </nav>
+
+  <script>
+    // Pasar datos del anime al JavaScript
+    window.animeData = {
+      title: '<%= anime.title %>',
+      slug: '<%= anime.slug %>',
+      totalEpisodes: <%= anime.totalEpisodes %>,
+      episodes: <%- JSON.stringify(anime.episodes) %>
+    };
+    
+    // Sistema de reintento para imágenes
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('img').forEach(img => {
+        let retries = 0;
+        const maxRetries = 3;
+        
+        img.addEventListener('error', function() {
+          if (retries < maxRetries) {
+            retries++;
+            setTimeout(() => {
+              this.src = this.src + (this.src.includes('?') ? '&' : '?') + 't=' + Date.now();
+            }, 1000 * retries);
+          }
+        });
+      });
+    });
+  </script>
+  <script src="/anime.js"></script>
+</body>
+</html>
