@@ -1,11 +1,11 @@
 // utils/requestHandler.js
-const axios = require('axios');
 const retry = require('async-retry');
+const { makeRequest } = require('./hybridRequest');
 
 async function performRequest(url, options = {}) {
   try {
     return await retry(
-      async () => await axios(url, options),
+      async () => await makeRequest(url, options),
       { retries: 3, onRetry: error => console.log(`Reintentando por ${error.message}`) }
     );
   } catch (error) {

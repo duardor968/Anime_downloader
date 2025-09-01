@@ -1,6 +1,6 @@
 /* ---------- Episode re-ordering ---------- */
-const sortSelect   = document.getElementById('episodeSort');
-const container    = document.getElementById('episodesContainer');
+const sortSelect = document.getElementById('episodeSort');
+const container = document.getElementById('episodesContainer');
 
 sortSelect?.addEventListener('change', () => {
   const order = sortSelect.value;              // "asc" | "desc"
@@ -18,9 +18,9 @@ sortSelect?.addEventListener('change', () => {
 
 /* ---------- Seleccionar / Deseleccionar Todo ---------- */
 const selectAllBtn = document.getElementById('selectAllBtn');
-const checkboxes   = () => document.querySelectorAll('[data-episode] input[type="checkbox"]');
-const bulkActions  = document.getElementById('bulkActions');
-const selectedCount= document.getElementById('selectedCount');
+const checkboxes = () => document.querySelectorAll('[data-episode] input[type="checkbox"]');
+const bulkActions = document.getElementById('bulkActions');
+const selectedCount = document.getElementById('selectedCount');
 
 let allSelected = false; // estado interno
 
@@ -58,11 +58,11 @@ function refreshBulkBar() {
 container?.addEventListener('change', e => {
   if (e.target.matches('input[type="checkbox"]')) {
     refreshBulkBar();
-    
+
     // Actualizar estado del botón "Seleccionar Todo"
     const totalCheckboxes = checkboxes().length;
     const checkedCheckboxes = [...checkboxes()].filter(cb => cb.checked).length;
-    
+
     if (selectAllBtn) {
       if (checkedCheckboxes === totalCheckboxes && totalCheckboxes > 0) {
         allSelected = true;
@@ -77,14 +77,14 @@ container?.addEventListener('change', e => {
 
 /* ---------- Búsqueda de episodios ---------- */
 const episodeSearch = document.getElementById('episodeSearch');
-episodeSearch?.addEventListener('input', function() {
+episodeSearch?.addEventListener('input', function () {
   const query = this.value.toLowerCase();
   const episodes = document.querySelectorAll('[data-episode]');
-  
+
   episodes.forEach(episode => {
     const title = episode.querySelector('h3')?.textContent.toLowerCase() || '';
     const number = episode.dataset.episode || '';
-    
+
     if (title.includes(query) || number.includes(query)) {
       episode.style.display = 'block';
     } else {
@@ -95,13 +95,13 @@ episodeSearch?.addEventListener('input', function() {
 
 /* ---------- Selector de rango de episodios ---------- */
 const episodeRange = document.getElementById('episodeRange');
-episodeRange?.addEventListener('change', function() {
+episodeRange?.addEventListener('change', function () {
   const [start, end] = this.value.split('-').map(Number);
   const episodes = document.querySelectorAll('[data-episode]');
-  
+
   episodes.forEach(episode => {
     const number = parseInt(episode.dataset.episode);
-    
+
     if (number >= start && number <= end) {
       episode.style.display = 'block';
     } else {
@@ -154,16 +154,16 @@ function showToast(message, isError = false) {
       </div>
     `;
     document.body.appendChild(toast);
-    
+
     // Agregar evento de cierre
     document.getElementById('anime-toast-close').addEventListener('click', () => {
       toast.classList.add('hidden');
     });
   }
-  
+
   const toastIcon = document.getElementById('anime-toast-icon') || toast.querySelector('i');
   const toastMessage = document.getElementById('anime-toast-message') || toast.querySelector('p');
-  
+
   // Configurar icono y mensaje
   if (toastIcon) {
     if (isError) {
@@ -172,13 +172,13 @@ function showToast(message, isError = false) {
       toastIcon.className = 'fas fa-check-circle text-wins';
     }
   }
-  
+
   if (toastMessage) {
     toastMessage.textContent = message;
   }
-  
+
   toast.classList.remove('hidden');
-  
+
   // Auto-ocultar después de 3 segundos
   setTimeout(() => {
     toast.classList.add('hidden');
@@ -194,10 +194,10 @@ function hideToast() {
 
 async function startDownload(episodes) {
   const animeName = window.animeData?.title || 'Anime';
-  
+
   try {
     showToast('Iniciando descarga...', false);
-    
+
     const res = await fetch('/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -256,36 +256,36 @@ document.getElementById('downloadSelectedBtn')?.addEventListener('click', () => 
 });
 
 /* Descarga individual de episodios */
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   if (e.target.closest('.download-episode')) {
     const btn = e.target.closest('.download-episode');
     const episodeLink = btn.dataset.link;
     const episodeTitle = btn.dataset.title;
     const animeName = window.animeData?.title || 'Anime';
-    
+
     // Crear título completo con nombre del anime
     const fullEpisodeTitle = `${animeName} - ${episodeTitle}`;
-    
+
     const originalContent = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Descargando...</span>';
-    
+
     fetch('/download-episode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ episodeTitle: fullEpisodeTitle, episodeLink })
     })
-    .then(response => response.json())
-    .then(data => {
-      showToast(data.message, !data.success);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      showToast('Error al procesar la descarga', true);
-    })
-    .finally(() => {
-      btn.disabled = false;
-      btn.innerHTML = originalContent;
-    });
+      .then(response => response.json())
+      .then(data => {
+        showToast(data.message, !data.success);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showToast('Error al procesar la descarga', true);
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+      });
   }
 });

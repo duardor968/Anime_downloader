@@ -1,6 +1,6 @@
 // utils/animeScraper.js
-const axios = require('axios');
 const cheerio = require('cheerio');
+const { makeRequest } = require('./hybridRequest');
 
 function getTimeAgo(dateString) {
   const now = new Date();
@@ -18,7 +18,7 @@ function getTimeAgo(dateString) {
 async function getRecentAnimes() {
   try {
     console.log('Realizando solicitud a animeav1.com...');
-    const response = await axios.get('https://animeav1.com');
+    const response = await makeRequest('https://animeav1.com');
     console.log('Solicitud realizada con éxito. Verificando contenido...');
     
     if (!response.data) {
@@ -128,7 +128,7 @@ async function searchAnimes(query) {
     const url = `https://animeav1.com/catalogo?search=${encodedQuery}`;
     console.log(`URL de búsqueda: ${url}`);
     
-    const response = await axios.get(url);
+    const response = await makeRequest(url);
     console.log('Respuesta recibida, procesando HTML...');
     
     const $ = cheerio.load(response.data);
@@ -192,7 +192,7 @@ async function getAnimeDetails(slug) {
     const url = `https://animeav1.com/media/${slug}`;
     console.log(`URL del anime: ${url}`);
     
-    const response = await axios.get(url);
+    const response = await makeRequest(url);
     console.log('Respuesta recibida, procesando detalles del anime...');
     
     const $ = cheerio.load(response.data);
@@ -249,6 +249,51 @@ async function getAnimeDetails(slug) {
         genres.push(genre);
       }
     });
+    
+    // Extraer información del tráiler
+    let trailerUrl = null;
+    
+    // Buscar datos JSON embebidos en la página que contienen información del tráiler
+    const scriptTags = $('script').toArray();
+    for (const script of scriptTags) {
+      const scriptContent = $(script).html();
+      if (scriptContent) {
+        try {
+          // Buscar patrón de trailer en el JSON con diferentes formatos
+          const trailerMatch = scriptContent.match(/["']trailer["']\s*:\s*["']([^"']+)["']/i) ||
+                               scriptContent.match(/trailer:\s*["']([^"']+)["']/i) ||
+                               scriptContent.match(/"trailer"\s*:\s*"([^"]+)"/i);
+          if (trailerMatch && trailerMatch[1] && trailerMatch[1] !== 'null') {
+            const trailerId = trailerMatch[1];
+            // Construir URL de YouTube
+            trailerUrl = `https://www.youtube.com/watch?v=${trailerId}`;
+            break;
+          }
+        } catch (e) {
+          // Continuar si hay error parseando
+        }
+      }
+    }
+    
+    // Si no se encuentra en JSON, buscar enlaces directos de YouTube
+    if (!trailerUrl) {
+      $('a[href*="youtube.com/watch"], a[href*="youtu.be/"]').each((i, el) => {
+        const href = $(el).attr('href');
+        if (href && !trailerUrl) {
+          trailerUrl = href;
+        }
+      });
+    }
+    
+    // Buscar iframes embebidos de YouTube
+    if (!trailerUrl) {
+      $('iframe[src*="youtube"]').each((i, el) => {
+        const src = $(el).attr('src');
+        if (src && !trailerUrl) {
+          trailerUrl = src;
+        }
+      });
+    }
     
     // Extraer rating de MAL de forma más específica
     let malRating = '0.0';
@@ -338,7 +383,8 @@ async function getAnimeDetails(slug) {
       malVotes: malVotes || '0',
       episodes,
       totalEpisodes: episodes.length,
-      episodeRanges: generateEpisodeRanges(episodes.length)
+      episodeRanges: generateEpisodeRanges(episodes.length),
+      trailerUrl: trailerUrl || null
     };
     
     // Extraer animes relacionados (temporadas, spin-offs, etc.)
@@ -393,6 +439,8 @@ async function getAnimeDetails(slug) {
     console.log(`- Rating MAL: ${malRating}`);
     console.log(`- Episodios: ${episodes.length}`);
     console.log(`- Relacionados: ${relatedAnimes.length}`);
+    console.log(`- Tráiler: ${trailerUrl || 'No disponible'}`);
+
     
     return animeDetailsWithRelated;
     

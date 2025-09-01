@@ -130,6 +130,12 @@
           <% } %>
           
           <div class="flex flex-wrap gap-3">
+            <% if (anime.trailerUrl) { %>
+              <a href="<%= anime.trailerUrl %>" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-info text-fore font-bold rounded-lg hover:opacity-90 transition-opacity">
+                <i class="fas fa-play"></i>
+                <span>Ver Tráiler</span>
+              </a>
+            <% } %>
             <button class="inline-flex items-center gap-2 px-6 py-3 bg-main text-fore font-bold rounded-lg hover:opacity-90 transition-opacity" id="downloadAllBtn">
               <i class="fas fa-download"></i>
               <span>Descargar Todo</span>

@@ -1,5 +1,5 @@
 // utils/jdownloader.js
-const axios = require('axios');
+const axios = require('axios'); // JDownloader es local, no necesita proxy
 
 class JDownloaderManager {
   async addLinks(links, animeName) {
@@ -17,7 +17,10 @@ class JDownloaderManager {
       await axios.post(
         'http://localhost:3128/linkgrabberv2/addLinks',
         payload,
-        { headers: { 'Content-Type': 'application/json' } }
+        { 
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000
+        }
       );
       return true;
     } catch (e) {
