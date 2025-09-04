@@ -5,47 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= anime.title %> - AnimeHub</title>
-  <link rel="stylesheet" href="/styles-tailwind.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/custom-theme.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 </head>
 <body class="bg-body text-text font-satoshi min-h-screen flex flex-col">
-  <header class="bg-body sticky top-0 z-40 border-b border-line/20">
-    <div class="container relative flex items-center justify-between gap-6 py-4 lg:py-6">
-      <div class="flex flex-1 gap-6 xl:flex-none">
-        <figure>
-          <a href="/" class="flex items-center gap-3">
-            <i class="fas fa-play-circle text-2xl text-main"></i>
-            <span class="text-lead font-bold text-xl">Anime<span class="text-main">Hub</span></span>
-          </a>
-        </figure>
-      </div>
-      
-      <nav class="hidden lg:flex">
-        <ul class="flex gap-1">
-          <li>
-            <a class="flex items-center gap-2 px-3 py-2 text-sm text-subs hover:text-lead hover:bg-soft rounded-lg transition-colors" href="/">
-              <i class="fas fa-home"></i>
-              <span>Inicio</span>
-            </a>
-          </li>
-          <li>
-            <a class="flex items-center gap-2 px-3 py-2 text-sm text-subs hover:text-lead hover:bg-soft rounded-lg transition-colors" href="/horario">
-              <i class="fas fa-calendar"></i>
-              <span>Horario</span>
-            </a>
-          </li>
-          <li>
-            <a class="flex items-center gap-2 px-3 py-2 text-sm text-subs hover:text-lead hover:bg-soft rounded-lg transition-colors" href="/catalogo">
-              <i class="fas fa-th-large"></i>
-              <span>Catálogo</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </header>
+  <%- include('partials/header') %>
 
   <main class="py-6">
     <div class="container">
@@ -146,7 +113,7 @@
 
       <!-- Related Animes Timeline -->
       <% if (anime.relatedAnimes && anime.relatedAnimes.length > 0) { %>
-        <section class="related-timeline">
+        <section class="related-timeline col-span-full">
           <div class="section-header">
             <h2 class="section-title">
               <i class="fas fa-link"></i>
@@ -187,7 +154,7 @@
       <% } %>
 
       <!-- Episodes Section -->
-      <section class="mt-12">
+      <section class="bg-radial-[closest-side] from-mute col-span-full mt-12 py-3">
         <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 p-4 bg-soft border border-line rounded-lg">
           <h2 class="text-xl font-semibold text-lead flex items-center gap-3">
             <i class="fas fa-play-circle"></i>
@@ -312,21 +279,7 @@
     </div>
   </div>
 
-  <footer class="mt-auto">
-    <div class="container flex flex-col flex-wrap items-center justify-center gap-4 py-12 md:flex-row lg:justify-between">
-      <div class="flex flex-col items-center gap-x-6 gap-y-4 py-2 md:flex-row">
-        <figure>
-          <a href="/" class="flex items-center gap-2">
-            <i class="fas fa-play-circle text-main text-xl"></i>
-            <span class="font-bold text-lead">Anime<span class="text-main">Hub</span></span>
-          </a>
-        </figure>
-        <span class="inline-flex items-center gap-3 text-sm font-medium">
-          <i class="fas fa-heart text-tone text-xl"></i> By fans for fans
-        </span>
-      </div>
-    </div>
-  </footer>
+  <%- include('partials/footer') %>
   
   <!-- Mobile Navigation -->
   <nav class="bg-body sticky bottom-0 z-30 lg:hidden border-t border-line/20">
