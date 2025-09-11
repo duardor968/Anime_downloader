@@ -8,21 +8,29 @@ async function getEpisodeDownloadLinks(episodePath) {
 
   const { data } = await makeRequest(url);
 
-  // Buscar la sección downloads dentro del JSON
-  const downloadsMatch = data.match(/downloads\s*:\s*\{\s*SUB\s*:\s*\[([\s\S]*?)\]/);
+  // Buscar la sección downloads y luego SUB dentro de ella
+  const downloadsMatch = data.match(/downloads:\{([\s\S]*?)\}\}/);
   if (!downloadsMatch) return [];
+  
+  const downloadsSection = downloadsMatch[1];
+  const subMatch = downloadsSection.match(/SUB:\[([\s\S]*?)\]/);
+  if (!subMatch) return [];
+  
+  const subDownloadsText = subMatch[1];
 
-  const downloadsBlock = downloadsMatch[1];
-  console.log('Downloads block:', downloadsBlock);
-
-  // Extraer URLs de MP4Upload y otros servidores
-  const urlRegex = /url\s*:\s*["'](https?:\/\/(?:www\.)?(?:mp4upload\.com|pixeldrain\.com|mega\.nz)[^"']*)["']/g;
   const links = [];
 
-  let match;
-  while ((match = urlRegex.exec(downloadsBlock)) !== null) {
-    links.push(match[1]);
-  }
+  // Buscar enlaces de Mega
+  const megaMatch = subDownloadsText.match(/\{server:"Mega",url:"([^"]+)"\}/);
+  if (megaMatch) links.push(megaMatch[1]);
+
+  // Buscar enlaces de MP4Upload
+  const mp4Match = subDownloadsText.match(/\{server:"MP4Upload",url:"([^"]+)"\}/);
+  if (mp4Match) links.push(mp4Match[1]);
+
+  // Buscar enlaces de PDrain (Pixeldrain)
+  const pdrainMatch = subDownloadsText.match(/\{server:"PDrain",url:"([^"]+)"\}/);
+  if (pdrainMatch) links.push(pdrainMatch[1]);
 
   return [...new Set(links)];
 }
