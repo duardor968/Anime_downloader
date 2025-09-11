@@ -82,8 +82,12 @@ async function getRecentAnimes() {
       
       if (animeTitle && poster && link) {
         const title = animeTitle;
+        // Extraer slug del anime desde el enlace del episodio
+        const animeSlug = link.split('/')[2] || ''; // /media/anime-slug/episode -> anime-slug
+        
         recentEpisodes.push({ 
           title, 
+          animeSlug,
           poster: poster.startsWith('http') ? poster : `https://animeav1.com${poster}`,
           link: link.startsWith('http') ? link : `https://animeav1.com${link}`,
           timeAgo: timeText || getTimeAgo(new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000)),

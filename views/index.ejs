@@ -163,9 +163,15 @@
                           </div>
                     </div>
                     <header class="grid items-start gap-1 p-2">
-                      <div class="text-xs font-bold uppercase text-subs line-clamp-2">
-                        <%= episode.title %>
-                      </div>
+                      <% if (episode.animeSlug) { %>
+                        <a href="/media/<%= episode.animeSlug %>" class="text-xs font-bold uppercase text-subs line-clamp-2 hover:text-main transition-colors">
+                          <%= episode.title %>
+                        </a>
+                      <% } else { %>
+                        <div class="text-xs font-bold uppercase text-subs line-clamp-2">
+                          <%= episode.title %>
+                        </div>
+                      <% } %>
                     </header>
                   </article>
                   <% }); %>
