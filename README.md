@@ -17,22 +17,51 @@ AnimeHub es una aplicación web moderna que permite buscar y explorar animes uti
 
 - **Búsqueda avanzada** - Busca animes por título con resultados en tiempo real
 - **Diseño responsive** - Interfaz optimizada para desktop y móvil
-- **Tema oscuro moderno** - Diseño minimalista con colores personalizados
+- **Tema oscuro moderno** - Diseño minimalista con degradados azules personalizados
+- **Carrusel interactivo** - Navegación automática con controles manuales y barra de progreso
 - **Exploración de animes** - Navega por animes recientes, destacados y relacionados
 - **Descarga automática** - Integración con JDownloader para descargas automáticas
+- **Progreso en tiempo real** - Seguimiento de descargas con Server-Sent Events
+- **Binarios compilados** - Ejecutables independientes sin necesidad de Node.js
 - **Soporte para proxy** - Compatible con redes corporativas y proxies del sistema
 - **Scraping híbrido** - Sistema de respaldo con curl para máxima compatibilidad
+- **TailwindCSS compilado** - Estilos optimizados y rápidos
 
 ## Instalación
 
-### Prerrequisitos
+### Requisitos previos (para ambas opciones)
 
+- **JDownloader 2** - Necesario para las descargas
+- **curl** - Para redes con proxy (opcional)
+
+### Opción 1: Binarios Compilados (Recomendado)
+
+**Descarga directa sin necesidad de Node.js:**
+
+1. **Descargar desde [Releases](../../releases)**
+   - `AnimeHub-v1.2.0-windows.exe` (Windows)
+   - `AnimeHub-v1.2.0-linux` (Linux)
+
+2. **Ejecutar directamente**
+```bash
+# Windows
+.\AnimeHub-v1.2.0-windows.exe
+
+# Linux
+chmod +x AnimeHub-v1.2.0-linux
+./AnimeHub-v1.2.0-linux
+```
+
+3. **Abrir en el navegador**
+```
+http://localhost:3000
+```
+
+### Opción 2: Desde Código Fuente
+
+**Prerrequisitos adicionales:**
 - Node.js 16+ 
 - npm o yarn
-- JDownloader 2 (para descargas)
-- curl (para redes con proxy)
-
-### Configuración
 
 1. **Clonar el repositorio**
 ```bash
@@ -45,13 +74,34 @@ cd AnimeDownloader
 npm install
 ```
 
-3. **Configurar JDownloader**
+3. **Compilar TailwindCSS**
+```bash
+npx tailwindcss -i ./src/input.css -o ./public/tailwind.css --minify
+```
+
+4. **Iniciar el servidor**
+```bash
+npm start
+# o
+node server.js
+```
+
+5. **Abrir en el navegador**
+```
+http://localhost:3000
+```
+
+## Configuración de JDownloader
+
+**Necesario para ambas versiones:**
+
+1. **Configurar JDownloader**
    - Abrir JDownloader 2
    - Ir a **Configuración** → **Configuración avanzada**
    - Buscar `Deprecated Api` y habilitar la API local
    - Configurar puerto a 3128
 
-4. **Configurar proxy** (si es necesario)
+2. **Configurar proxy** (si es necesario)
 ```bash
 # Windows
 set HTTP_PROXY=http://proxy.empresa.com:8080
@@ -60,18 +110,6 @@ set HTTPS_PROXY=http://proxy.empresa.com:8080
 # Linux/Mac
 export HTTP_PROXY=http://proxy.empresa.com:8080
 export HTTPS_PROXY=http://proxy.empresa.com:8080
-```
-
-5. **Iniciar el servidor**
-```bash
-npm start
-# o
-node server.js
-```
-
-6. **Abrir en el navegador**
-```
-http://localhost:3000
 ```
 
 ## Configuración avanzada
@@ -135,8 +173,23 @@ Esto garantiza compatibilidad con:
 # Iniciar servidor de desarrollo
 npm start
 
+# Compilar TailwindCSS
+npm run build:css
+
+# Compilar TailwindCSS (producción)
+npm run build:css:prod
+
 # Ejecutar tests (si están configurados)
 npm test
+```
+
+### Compilar binarios
+
+```bash
+# Compilar para Windows y Linux
+./build.bat
+
+# Los archivos se generarán en la carpeta release/
 ```
 
 ### Estructura de rutas
