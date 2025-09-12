@@ -163,8 +163,17 @@ function showToast(message, isError = false) {
 
   const toastIcon = document.getElementById('anime-toast-icon') || toast.querySelector('i');
   const toastMessage = document.getElementById('anime-toast-message') || toast.querySelector('p');
+  const isVisible = !toast.classList.contains('hidden');
 
-  // Configurar icono y mensaje
+  // Solo actualizar contenido si ya está visible (evita parpadeo)
+  if (isVisible) {
+    if (toastMessage) {
+      toastMessage.textContent = message;
+    }
+    return; // No hacer nada más
+  }
+
+  // Configurar icono y mensaje solo para toast nuevo
   if (toastIcon) {
     if (isError) {
       toastIcon.className = 'fas fa-exclamation-circle text-fire';
@@ -179,10 +188,12 @@ function showToast(message, isError = false) {
 
   toast.classList.remove('hidden');
 
-  // Auto-ocultar después de 3 segundos
-  setTimeout(() => {
-    toast.classList.add('hidden');
-  }, 3000);
+  // Auto-ocultar después de 3 segundos solo si no es un mensaje de progreso
+  if (!message.includes('/')) {
+    setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 3000);
+  }
 }
 
 function hideToast() {

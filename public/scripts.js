@@ -132,61 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
-  // Carousel functionality
-  const carousel = {
-    currentSlide: 0,
-    slides: document.querySelectorAll('#carousel-slides > article'),
-    container: document.getElementById('carousel-slides'),
-    
-    init() {
-      if (this.slides.length === 0) return;
-      
-      // Auto-play
-      this.autoPlay = setInterval(() => this.nextSlide(), 5000);
-      
-      // Controls
-      const prevBtn = document.getElementById('carousel-prev');
-      const nextBtn = document.getElementById('carousel-next');
-      
-      if (prevBtn) prevBtn.addEventListener('click', () => this.prevSlide());
-      if (nextBtn) nextBtn.addEventListener('click', () => this.nextSlide());
-      
-      // Pause on hover
-      if (this.container) {
-        this.container.addEventListener('mouseenter', () => this.pauseAutoPlay());
-        this.container.addEventListener('mouseleave', () => this.resumeAutoPlay());
-      }
-    },
-    
-    goToSlide(index) {
-      this.currentSlide = index;
-      if (this.container) {
-        this.container.style.transform = `translateX(-${index * 100}%)`;
-      }
-    },
-    
-    nextSlide() {
-      const next = (this.currentSlide + 1) % this.slides.length;
-      this.goToSlide(next);
-    },
-    
-    prevSlide() {
-      const prev = (this.currentSlide - 1 + this.slides.length) % this.slides.length;
-      this.goToSlide(prev);
-    },
-    
-    pauseAutoPlay() {
-      if (this.autoPlay) {
-        clearInterval(this.autoPlay);
-      }
-    },
-    
-    resumeAutoPlay() {
-      this.autoPlay = setInterval(() => this.nextSlide(), 5000);
-    }
-  };
-  
-  carousel.init();
   
   // Manejar búsqueda
   const searchForm = document.querySelector('form[action="/search"]');
@@ -200,35 +145,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Manejar descargas
-  document.getElementById('download-all').addEventListener('click', function() {
-    const animeName = document.querySelector('.anime-details h2').textContent;
-    const episodes = document.querySelectorAll('.episode-item input');
-    
-    const selectedEpisodes = [];
-    episodes.forEach(episode => {
-      selectedEpisodes.push({
-        number: episode.id.split('-')[1],
-        link: episode.value
-      });
-    });
-    
-    performDownload(animeName, selectedEpisodes);
-  });
+  // Manejar descargas (solo en páginas de anime)
+  const downloadAllBtn = document.getElementById('download-all');
+  const downloadSelectedBtn = document.getElementById('download-selected');
   
-  document.getElementById('download-selected').addEventListener('click', function() {
-    const animeName = document.querySelector('.anime-details h2').textContent;
-    const selectedEpisodes = [];
-    
-    document.querySelectorAll('.episode-item input:checked').forEach(episode => {
-      selectedEpisodes.push({
-        number: episode.id.split('-')[1],
-        link: episode.value
+  if (downloadAllBtn) {
+    downloadAllBtn.addEventListener('click', function() {
+      const animeName = document.querySelector('.anime-details h2').textContent;
+      const episodes = document.querySelectorAll('.episode-item input');
+      
+      const selectedEpisodes = [];
+      episodes.forEach(episode => {
+        selectedEpisodes.push({
+          number: episode.id.split('-')[1],
+          link: episode.value
+        });
       });
+      
+      performDownload(animeName, selectedEpisodes);
     });
-    
-    performDownload(animeName, selectedEpisodes);
-  });
+  }
+  
+  if (downloadSelectedBtn) {
+    downloadSelectedBtn.addEventListener('click', function() {
+      const animeName = document.querySelector('.anime-details h2').textContent;
+      const selectedEpisodes = [];
+      
+      document.querySelectorAll('.episode-item input:checked').forEach(episode => {
+        selectedEpisodes.push({
+          number: episode.id.split('-')[1],
+          link: episode.value
+        });
+      });
+      
+      performDownload(animeName, selectedEpisodes);
+    });
+  }
   
   // Función para realizar la descarga
   async function performDownload(animeName, episodes) {

@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos personalizados para mantener el diseño exacto */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Satoshi', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    overflow-x: hidden;
+    font-size: 14px;
+  }
+}
+
+@layer components {
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .btn {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 border;
+  }
+
+  .btn-primary {
+    background: linear-gradient(to right, rgb(var(--main)), rgb(var(--info)));
+    @apply text-fore border-transparent hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  .btn-secondary {
+    @apply bg-soft text-subs border-line hover:bg-main hover:text-fore hover:border-main;
+  }
+
+  .btn-sm {
+    @apply px-2 py-1 text-xs;
+  }
+
+  .btn-xs {
+    @apply px-2 py-1 text-xs;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .aspect-poster {
+    aspect-ratio: 1/1.5;
+  }
+
+  .aspect-video {
+    aspect-ratio: 16/9;
+  }
+}
+
+@layer utilities {
+  .bg-cut-l {
+    mask: linear-gradient(to left, rgb(19, 19, 23), transparent);
+    -webkit-mask: linear-gradient(to left, rgb(19, 19, 23), transparent);
+  }
+
+  .bg-cut-r {
+    mask: linear-gradient(to right, rgb(19, 19, 23), transparent);
+    -webkit-mask: linear-gradient(to right, rgb(19, 19, 23), transparent);
+  }
+
+  .bg-cut-y {
+    mask: linear-gradient(to top, transparent, rgb(19, 19, 23) 50%, transparent);
+    -webkit-mask: linear-gradient(to top, transparent, rgb(19, 19, 23) 50%, transparent);
+  }
+}

@@ -25,7 +25,9 @@
 .bg-lead { background-color: rgb(var(--lead)); }
 .bg-subs { background-color: rgb(var(--subs)); }
 .bg-fore { background-color: rgb(var(--fore)); }
-.bg-main { background-color: rgb(var(--main)); }
+.bg-main { 
+  background: linear-gradient(to right, rgb(var(--main)), rgb(var(--info)));
+}
 .bg-tone { background-color: rgb(var(--tone)); }
 .bg-mark { background-color: rgb(var(--mark)); }
 .bg-mute { background-color: rgb(var(--mute)); }
@@ -43,7 +45,12 @@
 .text-lead { color: rgb(var(--lead)); }
 .text-subs { color: rgb(var(--subs)); }
 .text-fore { color: rgb(var(--fore)); }
-.text-main { color: rgb(var(--main)); }
+.text-main { 
+  background: linear-gradient(to right, rgb(var(--main)), rgb(var(--info)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .text-tone { color: rgb(var(--tone)); }
 .text-mark { color: rgb(var(--mark)); }
 .text-mute { color: rgb(var(--mute)); }
@@ -59,6 +66,27 @@
 .border-line { border-color: rgb(var(--line)); }
 .border-main { border-color: rgb(var(--main)); }
 .border-soft { border-color: rgb(var(--soft)); }
+
+.header-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: rgb(var(--soft));
+  border: 1px solid rgb(var(--line));
+  border-radius: 0.5rem;
+  color: rgb(var(--subs));
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.1s ease;
+  text-decoration: none;
+}
+
+.header-nav-btn:hover {
+  background: linear-gradient(to right, rgb(var(--main)), rgb(var(--info)));
+  color: rgb(var(--fore));
+  border-color: rgb(var(--main));
+}
 
 .placeholder-subs::placeholder { color: rgb(var(--subs)); }
 

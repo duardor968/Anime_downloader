@@ -6,7 +6,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anime Downloader</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/tailwind.css">
   <link rel="stylesheet" href="/custom-theme.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,6 +344,7 @@
           const totalSlides = slides.length;
           let autoPlayInterval;
           let progressInterval;
+          let progress = 0;
 
           function updateIndicators() {
             indicators.forEach((indicator, index) => {
@@ -377,35 +379,45 @@
 
           function startAutoPlay() {
             if (totalSlides > 1) {
+              // Limpiar intervalos previos
+              stopAutoPlay();
+              
               const progressBar = document.getElementById('progress-bar');
-              let progress = 0;
-
-              progressInterval = setInterval(() => {
-                progress += 2;
-                if (progressBar) {
-                  progressBar.style.width = progress + '%';
-                }
-                if (progress >= 100) {
-                  clearInterval(progressInterval);
-                }
-              }, 100);
-
-              autoPlayInterval = setInterval(() => {
-                nextSlide();
+              
+              // Usar setTimeout para evitar solapamiento
+              setTimeout(() => {
                 progress = 0;
                 if (progressBar) {
                   progressBar.style.width = '0%';
                 }
-              }, 5000);
+
+                progressInterval = setInterval(() => {
+                  progress += 2;
+                  if (progressBar) {
+                    progressBar.style.width = progress + '%';
+                  }
+                }, 100);
+
+                autoPlayInterval = setInterval(() => {
+                  nextSlide();
+                  // Reiniciar progreso inmediatamente
+                  progress = 0;
+                  if (progressBar) {
+                    progressBar.style.width = '0%';
+                  }
+                }, 5000);
+              }, 50); // Pequeño delay para asegurar limpieza
             }
           }
 
           function stopAutoPlay() {
             if (autoPlayInterval) {
               clearInterval(autoPlayInterval);
+              autoPlayInterval = null;
             }
             if (progressInterval) {
               clearInterval(progressInterval);
+              progressInterval = null;
             }
           }
 
