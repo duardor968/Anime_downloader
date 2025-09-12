@@ -17,19 +17,19 @@ function getTimeAgo(dateString) {
 
 async function getRecentAnimes() {
   try {
-    console.log('Realizando solicitud a animeav1.com...');
+    console.log('[INFO] Fetching data from animeav1.com');
     const response = await makeRequest('https://animeav1.com');
-    console.log('Solicitud realizada con éxito. Verificando contenido...');
+    console.log('[INFO] Successfully received response from animeav1.com');
     
     if (!response.data) {
-      console.error('No se obtuvo contenido de la página');
+      console.error('[ERROR] No content received from animeav1.com');
       return { recentEpisodes: [], recentAnimes: [], featuredAnimes: [] };
     }
 
     const $ = cheerio.load(response.data);
 
     // Extraer animes destacados del carrusel
-    console.log('Extrayendo animes destacados...');
+    console.log('[INFO] Extracting featured animes from carousel');
     const featuredAnimes = [];
     $('.flex.transform-gpu article').each((index, element) => {
       if (index >= 10) return false; // Obtener hasta 10 elementos
@@ -68,7 +68,7 @@ async function getRecentAnimes() {
       }
     });
 
-    console.log('Extrayendo episodios recientes...');
+    console.log('[INFO] Extracting recent episodes');
     const recentEpisodes = [];
     $('main section:first-child article').each((index, element) => {
       const $element = $(element);
@@ -96,7 +96,7 @@ async function getRecentAnimes() {
       }
     });
 
-    console.log('Extrayendo animes recientes...');
+    console.log('[INFO] Extracting recent animes');
     const recentAnimes = [];
     $('main section:nth-child(2) article').each((index, element) => {
       const $element = $(element);
@@ -117,23 +117,23 @@ async function getRecentAnimes() {
       }
     });
 
-    console.log('Proceso de extracción completado.');
+    console.log('[INFO] Data extraction completed successfully');
     return { recentEpisodes, recentAnimes, featuredAnimes };
   } catch (error) {
-    console.error('Error al obtener animes:', error);
+    console.error('[ERROR] Failed to fetch animes from animeav1.com:', error.message);
     return { recentEpisodes: [], recentAnimes: [], featuredAnimes: [] };
   }
 }
 
 async function searchAnimes(query) {
   try {
-    console.log(`Iniciando búsqueda para: ${query}`);
+    console.log(`[INFO] Starting search for: ${query}`);
     const encodedQuery = encodeURIComponent(query);
     const url = `https://animeav1.com/catalogo?search=${encodedQuery}`;
-    console.log(`URL de búsqueda: ${url}`);
+    console.log(`[INFO] Search URL: ${url}`);
     
     const response = await makeRequest(url);
-    console.log('Respuesta recibida, procesando HTML...');
+    console.log('[INFO] Response received, processing HTML...');
     
     const $ = cheerio.load(response.data);
     const animes = [];
@@ -164,9 +164,8 @@ async function searchAnimes(query) {
       // Extraer descripción si está disponible
       const description = $element.find('.line-clamp-6').text().trim();
       
-      console.log(`Anime encontrado: ${title}, Poster: ${poster}, Link: ${link}, Slug: ${slug}`);
-      
       if (title && poster && link) {
+        console.log(`[DEBUG] Found anime: ${title}`);
         animes.push({ 
           title, 
           slug, 
@@ -178,13 +177,12 @@ async function searchAnimes(query) {
       }
     });
     
-    console.log(`Búsqueda completada. ${animes.length} animes encontrados.`);
+    console.log(`[INFO] Search completed. Found ${animes.length} animes`);
     return animes;
   } catch (error) {
-    console.error('Error al buscar animes:', error.message);
+    console.error(`[ERROR] Search failed for query '${query}':`, error.message);
     if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Headers:', error.response.headers);
+      console.error('[ERROR] HTTP Status:', error.response.status);
     }
     return [];
   }
@@ -192,12 +190,12 @@ async function searchAnimes(query) {
 
 async function getAnimeDetails(slug) {
   try {
-    console.log(`Obteniendo detalles del anime: ${slug}`);
+    console.log(`[INFO] Fetching anime details: ${slug}`);
     const url = `https://animeav1.com/media/${slug}`;
-    console.log(`URL del anime: ${url}`);
+    console.log(`[INFO] Anime URL: ${url}`);
     
     const response = await makeRequest(url);
-    console.log('Respuesta recibida, procesando detalles del anime...');
+    console.log('[INFO] Response received, processing anime details...');
     
     const $ = cheerio.load(response.data);
     
@@ -205,7 +203,7 @@ async function getAnimeDetails(slug) {
     const mainArticle = $('article.text-subs.dark.relative').first();
     
     if (!mainArticle.length) {
-      console.error('No se encontró el article principal del anime');
+      console.error(`[ERROR] Main article not found for anime: ${slug}`);
       return null;
     }
     
@@ -319,7 +317,7 @@ async function getAnimeDetails(slug) {
       }
     });
     
-    console.log('Extrayendo episodios...');
+    console.log('[INFO] Extracting episodes...');
     const episodes = [];
     
     // Buscar episodios con selectores más amplios
@@ -433,26 +431,21 @@ async function getAnimeDetails(slug) {
       relatedAnimes
     };
     
-    console.log(`Detalles del anime extraídos:`);
-    console.log(`- Título: ${title}`);
-    console.log(`- Título alternativo: ${alternativeTitle}`);
-    console.log(`- Tipo: ${type}`);
-    console.log(`- Año: ${year}`);
-    console.log(`- Estado: ${status}`);
-    console.log(`- Géneros: ${genres.join(', ')}`);
-    console.log(`- Rating MAL: ${malRating}`);
-    console.log(`- Episodios: ${episodes.length}`);
-    console.log(`- Relacionados: ${relatedAnimes.length}`);
-    console.log(`- Tráiler: ${trailerUrl || 'No disponible'}`);
+    console.log(`[INFO] Anime details extracted successfully:`);
+    console.log(`[INFO] - Title: ${title}`);
+    console.log(`[INFO] - Type: ${type}`);
+    console.log(`[INFO] - Year: ${year}`);
+    console.log(`[INFO] - Status: ${status}`);
+    console.log(`[INFO] - Episodes: ${episodes.length}`);
+    console.log(`[INFO] - Related animes: ${relatedAnimes.length}`);
 
     
     return animeDetailsWithRelated;
     
   } catch (error) {
-    console.error('Error al obtener detalles del anime:', error.message);
+    console.error(`[ERROR] Failed to get anime details for '${slug}':`, error.message);
     if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('URL:', error.config?.url);
+      console.error('[ERROR] HTTP Status:', error.response.status);
     }
     return null;
   }

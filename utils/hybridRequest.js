@@ -40,10 +40,17 @@ async function makeRequest(url, options = {}) {
     throw new Error(`HTTP ${response.status}`);
     
   } catch (axiosError) {
-    console.log(`⚠️  Axios falló (${axiosError.message}), intentando con curl...`);
+    console.log(`[WARN] Axios request failed (${axiosError.message}), trying curl fallback`);
     
     // Fallback a curl
-    return await makeRequestWithCurl(url, options);
+    try {
+      return await makeRequestWithCurl(url, options);
+    } catch (curlError) {
+      console.error(`[ERROR] Both axios and curl failed for ${url}:`);
+      console.error(`[ERROR] Axios: ${axiosError.message}`);
+      console.error(`[ERROR] Curl: ${curlError.message}`);
+      throw new Error(`Network request failed: ${curlError.message}`);
+    }
   }
 }
 
