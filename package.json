@@ -6,8 +6,8 @@
   "bin": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build:css": "tailwindcss -i ./src/input.css -o ./public/tailwind.css --watch",
-    "build:css:prod": "tailwindcss -i ./src/input.css -o ./public/tailwind.css --minify",
+    "build:css": "tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --watch",
+    "build:css:prod": "tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
