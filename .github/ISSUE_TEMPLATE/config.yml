@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discusión General
+    url: https://github.com/tu-usuario/AnimeDownloader/discussions
+    about: Para preguntas generales, ideas o discusiones sobre el proyecto
+  - name: 🔒 Reporte de Seguridad
+    url: mailto:duardo.r968@gmail.com
+    about: Para reportar vulnerabilidades de seguridad (no usar issues públicos)
