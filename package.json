@@ -1,13 +1,15 @@
 {
   "name": "animedownloader",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Anime Downloader - AnimeHub",
   "main": "server.js",
-  "bin": "server.js",
+
   "scripts": {
     "start": "node server.js",
     "build:css": "tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --watch",
     "build:css:prod": "tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --minify",
+    "build:ncc": "npx @vercel/ncc build server.js -o dist",
+    "build:sea": "node --experimental-sea-config sea-config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

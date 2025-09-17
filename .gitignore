@@ -1,3 +1,13 @@
 /.vs
 /node_modules
 /release
+
+# SEA build files
+sea-prep.blob
+/dist
+
+# Build artifacts
+*.exe
+*.app
+*.deb
+*.rpm

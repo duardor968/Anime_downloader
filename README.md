@@ -22,7 +22,7 @@ AnimeHub es una aplicación web moderna que permite buscar y explorar animes uti
 - **Exploración de animes** - Navega por animes recientes, destacados y relacionados
 - **Descarga automática** - Integración con JDownloader para descargas automáticas
 - **Progreso en tiempo real** - Seguimiento de descargas con Server-Sent Events
-- **Binarios compilados** - Ejecutables independientes sin necesidad de Node.js
+- **Binarios compilados** - Ejecutables independientes con Node.js SEA (Single Executable Applications)
 - **Soporte para proxy** - Compatible con redes corporativas y proxies del sistema
 - **Scraping híbrido** - Sistema de respaldo con curl para máxima compatibilidad
 - **TailwindCSS compilado** - Estilos optimizados y rápidos
@@ -39,17 +39,17 @@ AnimeHub es una aplicación web moderna que permite buscar y explorar animes uti
 **Descarga directa sin necesidad de Node.js:**
 
 1. **Descargar desde [Releases](../../releases)**
-   - `AnimeHub-v1.2.0-windows.exe` (Windows)
-   - `AnimeHub-v1.2.0-linux` (Linux)
+   - `AnimeHub-v1.2.2-windows.exe` (Windows)
+   - `AnimeHub-v1.2.2-linux` (Linux)
 
 2. **Ejecutar directamente**
 ```bash
 # Windows
-.\AnimeHub-v1.2.0-windows.exe
+.\AnimeHub-v1.2.2-windows.exe
 
 # Linux
-chmod +x AnimeHub-v1.2.0-linux
-./AnimeHub-v1.2.0-linux
+chmod +x AnimeHub-v1.2.2-linux
+./AnimeHub-v1.2.2-linux
 ```
 
 3. **Abrir en el navegador**
@@ -60,7 +60,7 @@ http://localhost:3000
 ### Opción 2: Desde Código Fuente
 
 **Prerrequisitos adicionales:**
-- Node.js 16+ 
+- Node.js 20+ 
 - npm o yarn
 
 1. **Clonar el repositorio**
@@ -186,8 +186,8 @@ npm test
 ### Compilar binarios
 
 ```bash
-# Compilar para Windows y Linux
-./build.bat
+# Compilar ejecutable con Node.js SEA
+./build-sea.bat
 
 # Los archivos se generarán en la carpeta release/
 ```
