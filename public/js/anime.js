@@ -1,153 +1,143 @@
-/* ---------- Episode re-ordering ---------- */
-const sortSelect = document.getElementById('episodeSort');
-const container = document.getElementById('episodesContainer');
+/* ---------- Paginación de episodios ---------- */
+let currentRange = { start: 1, end: 50 };
+let allEpisodes = [];
 
-sortSelect?.addEventListener('change', () => {
-  const order = sortSelect.value;              // "asc" | "desc"
-  const cards = Array.from(container.children); // all episode nodes
+// Inicializar datos de episodios
+if (window.animeData?.episodes) {
+  allEpisodes = window.animeData.episodes;
+}
 
-  cards.sort((a, b) => {
-    const numA = parseInt(a.dataset.episode, 10);
-    const numB = parseInt(b.dataset.episode, 10);
-    return order === 'asc' ? numA - numB : numB - numA;
+// Función para mostrar episodios en el rango actual
+function showEpisodesInRange(start, end) {
+  const container = document.getElementById('episodesContainer');
+  if (!container) return;
+
+  // Limpiar contenedor
+  container.innerHTML = '';
+
+  // Filtrar episodios en el rango
+  const episodesToShow = allEpisodes.filter(ep => {
+    const num = parseInt(ep.number);
+    return num >= start && num <= end;
   });
 
-  // Re-append in new order
-  cards.forEach(card => container.appendChild(card));
-});
+  // Generar HTML para cada episodio
+  episodesToShow.forEach(episode => {
+    const animeId = window.animeData?.animeId || '';
+    const screenshotUrl = animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/${episode.number}.jpg` : '';
+    
+    const episodeHTML = `
+      <article class="group/item text-body relative" data-episode="${episode.number}">
+        <div class="absolute top-3 left-3 z-20">
+          <input type="checkbox" id="ep-${episode.number}" value="${episode.link}" class="episode-checkbox">
+        </div>
+        
+        <div class="relative bg-current">
+          <figure class="dark rounded-lg bg-black">
+            <img class="aspect-video w-full rounded-lg object-cover transition-all group-hover/item:opacity-50" 
+                 width="300" height="169" loading="lazy" 
+                 src="${screenshotUrl}" 
+                 alt="backdrop"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="aspect-video w-full rounded-lg bg-line flex items-center justify-center" style="display:none">
+              <i class="fas fa-film text-2xl text-subs"></i>
+            </div>
+          </figure>
+          
+          <div class="absolute bottom-0 start-0 z-10 flex gap-2 bg-body pe-1 pt-1 episode-label">
+            <div class="bg-line text-subs rounded px-2 py-1 text-xs font-bold">
+              Episodio <span class="text-lead font-bold">${episode.number}</span>
+            </div>
+          </div>
+          
+          <button class="absolute inset-0 m-auto grid h-12 w-12 place-content-center rounded-full bg-main text-fore opacity-0 transition-all group-hover/item:opacity-100 download-episode" 
+                  data-link="${episode.link}" 
+                  data-title="Episodio ${episode.number}">
+            <i class="fas fa-download text-xl"></i>
+          </button>
+        </div>
+      </article>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', episodeHTML);
+  });
 
-/* ---------- Seleccionar / Deseleccionar Todo ---------- */
-const selectAllBtn = document.getElementById('selectAllBtn');
-const checkboxes = () => document.querySelectorAll('[data-episode] input[type="checkbox"]');
-const bulkActions = document.getElementById('bulkActions');
-const selectedCount = document.getElementById('selectedCount');
-
-let allSelected = false; // estado interno
-
-// Inicializar estado de la barra de acciones
-refreshBulkBar();
-
-selectAllBtn?.addEventListener('click', () => {
-  allSelected = !allSelected;            // invertimos el estado
-  checkboxes().forEach(cb => cb.checked = allSelected);
-
-  // Actualizar texto del botón
-  selectAllBtn.innerHTML = allSelected
-    ? '<i class="fas fa-times-square mr-2"></i><span>Deseleccionar Todo</span>'
-    : '<i class="fas fa-check-square mr-2"></i><span>Seleccionar Todo</span>';
-
-  refreshBulkBar();
-});
-
-/* ---------- Función auxiliar para mostrar / ocultar barra masiva ---------- */
-function refreshBulkBar() {
-  const checked = [...checkboxes()].filter(cb => cb.checked);
-  if (selectedCount) selectedCount.textContent = checked.length;
-
-  // Mostrar u ocultar la barra
-  if (bulkActions) {
-    if (checked.length > 0) {
-      bulkActions.classList.remove('hidden');
-    } else {
-      bulkActions.classList.add('hidden');
-    }
+  // Actualizar el texto del rango actual
+  const currentRangeElement = document.getElementById('currentRange');
+  if (currentRangeElement) {
+    currentRangeElement.textContent = `${start} - ${Math.min(end, allEpisodes.length)}`;
   }
 }
 
-/* ---------- Actualizar barra cada vez que un checkbox cambie ---------- */
-container?.addEventListener('change', e => {
-  if (e.target.matches('input[type="checkbox"]')) {
-    refreshBulkBar();
+// Manejar clic en el botón de rango de episodios
+document.getElementById('episodeRangeBtn')?.addEventListener('click', function() {
+  // Crear dropdown dinámico
+  const existingDropdown = document.getElementById('episodeRangeDropdown');
+  if (existingDropdown) {
+    existingDropdown.remove();
+    return;
+  }
 
-    // Actualizar estado del botón "Seleccionar Todo"
-    const totalCheckboxes = checkboxes().length;
-    const checkedCheckboxes = [...checkboxes()].filter(cb => cb.checked).length;
+  const dropdown = document.createElement('div');
+  dropdown.id = 'episodeRangeDropdown';
+  dropdown.className = 'absolute bg-soft border border-line rounded-lg shadow-lg z-50';
+  dropdown.style.minWidth = '120px';
+  dropdown.style.bottom = '100%';
+  dropdown.style.left = '0';
+  dropdown.style.marginBottom = '8px';
+  
+  // Generar opciones de rango
+  const ranges = [];
+  const rangeSize = 50;
+  for (let i = 1; i <= allEpisodes.length; i += rangeSize) {
+    const end = Math.min(i + rangeSize - 1, allEpisodes.length);
+    ranges.push({ start: i, end: end, label: `${i} - ${end}` });
+  }
 
-    if (selectAllBtn) {
-      if (checkedCheckboxes === totalCheckboxes && totalCheckboxes > 0) {
-        allSelected = true;
-        selectAllBtn.innerHTML = '<i class="fas fa-times-square mr-2"></i><span>Deseleccionar Todo</span>';
-      } else {
-        allSelected = false;
-        selectAllBtn.innerHTML = '<i class="fas fa-check-square mr-2"></i><span>Seleccionar Todo</span>';
+  ranges.forEach(range => {
+    const option = document.createElement('button');
+    option.className = 'w-full text-left px-3 py-2 text-sm text-text hover:bg-mute hover:text-lead transition-colors border-none bg-transparent';
+    option.textContent = range.label;
+    option.addEventListener('click', () => {
+      currentRange = range;
+      showEpisodesInRange(range.start, range.end);
+      dropdown.remove();
+    });
+    dropdown.appendChild(option);
+  });
+
+  // Posicionar dropdown
+  this.style.position = 'relative';
+  this.appendChild(dropdown);
+
+  // Cerrar dropdown al hacer clic fuera
+  setTimeout(() => {
+    document.addEventListener('click', function closeDropdown(e) {
+      if (!dropdown.contains(e.target) && e.target !== document.getElementById('episodeRangeBtn')) {
+        dropdown.remove();
+        document.removeEventListener('click', closeDropdown);
       }
-    }
-  }
-});
-
-/* ---------- Búsqueda de episodios ---------- */
-const episodeSearch = document.getElementById('episodeSearch');
-episodeSearch?.addEventListener('input', function () {
-  const query = this.value.toLowerCase();
-  const episodes = document.querySelectorAll('[data-episode]');
-
-  episodes.forEach(episode => {
-    const title = episode.querySelector('h3')?.textContent.toLowerCase() || '';
-    const number = episode.dataset.episode || '';
-
-    if (title.includes(query) || number.includes(query)) {
-      episode.style.display = 'block';
-    } else {
-      episode.style.display = 'none';
-    }
-  });
-});
-
-/* ---------- Selector de rango de episodios ---------- */
-const episodeRange = document.getElementById('episodeRange');
-episodeRange?.addEventListener('change', function () {
-  const [start, end] = this.value.split('-').map(Number);
-  const episodes = document.querySelectorAll('[data-episode]');
-
-  episodes.forEach(episode => {
-    const number = parseInt(episode.dataset.episode);
-
-    if (number >= start && number <= end) {
-      episode.style.display = 'block';
-    } else {
-      episode.style.display = 'none';
-    }
-  });
-});
-
-/* ---------- Botón "Limpiar Selección" ---------- */
-const clearSelectionBtn = document.getElementById('clearSelectionBtn');
-
-clearSelectionBtn?.addEventListener('click', () => {
-  // Desmarcar todos los checkboxes
-  document
-    .querySelectorAll('[data-episode] input[type="checkbox"]')
-    .forEach(cb => cb.checked = false);
-
-  // Restaurar estado y texto del botón principal
-  allSelected = false;
-  if (selectAllBtn) {
-    selectAllBtn.innerHTML = '<i class="fas fa-check-square mr-2"></i><span>Seleccionar Todo</span>';
-  }
-
-  // Ocultar la barra de acciones masivas
-  refreshBulkBar();
+    });
+  }, 0);
 });
 
 /* ---------- Toast para mostrar mensajes ---------- */
 function showToast(message, isError = false) {
-  // Usar el toast existente o crear uno nuevo
   let toast = document.getElementById('toast');
   if (!toast) {
-    // Crear toast si no existe
     toast = document.createElement('div');
-    toast.id = 'anime-toast';
-    toast.className = 'fixed bottom-4 left-4 z-50 hidden';
+    toast.id = 'toast';
+    toast.className = 'fixed bottom-4 right-4 z-50 hidden';
     toast.innerHTML = `
       <div class="bg-soft border border-line rounded-lg p-4 shadow-lg max-w-sm">
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <i class="fas fa-info-circle text-info" id="anime-toast-icon"></i>
+            <i class="fas fa-info-circle text-info" id="toast-icon"></i>
           </div>
           <div class="flex-1">
-            <p class="text-sm text-text" id="anime-toast-message">Mensaje</p>
+            <p class="text-sm text-text" id="toast-message">Mensaje</p>
           </div>
-          <button class="flex-shrink-0 text-subs hover:text-lead" id="anime-toast-close">
+          <button class="flex-shrink-0 text-subs hover:text-lead" id="toast-close">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -155,31 +145,18 @@ function showToast(message, isError = false) {
     `;
     document.body.appendChild(toast);
 
-    // Agregar evento de cierre
-    document.getElementById('anime-toast-close').addEventListener('click', () => {
+    document.getElementById('toast-close').addEventListener('click', () => {
       toast.classList.add('hidden');
     });
   }
 
-  const toastIcon = document.getElementById('anime-toast-icon') || toast.querySelector('i');
-  const toastMessage = document.getElementById('anime-toast-message') || toast.querySelector('p');
-  const isVisible = !toast.classList.contains('hidden');
+  const toastIcon = document.getElementById('toast-icon');
+  const toastMessage = document.getElementById('toast-message');
 
-  // Solo actualizar contenido si ya está visible (evita parpadeo)
-  if (isVisible) {
-    if (toastMessage) {
-      toastMessage.textContent = message;
-    }
-    return; // No hacer nada más
-  }
-
-  // Configurar icono y mensaje solo para toast nuevo
   if (toastIcon) {
-    if (isError) {
-      toastIcon.className = 'fas fa-exclamation-circle text-fire';
-    } else {
-      toastIcon.className = 'fas fa-check-circle text-wins';
-    }
+    toastIcon.className = isError 
+      ? 'fas fa-exclamation-circle text-fire' 
+      : 'fas fa-check-circle text-wins';
   }
 
   if (toastMessage) {
@@ -188,7 +165,6 @@ function showToast(message, isError = false) {
 
   toast.classList.remove('hidden');
 
-  // Auto-ocultar después de 3 segundos solo si no es un mensaje de progreso
   if (!message.includes('/')) {
     setTimeout(() => {
       toast.classList.add('hidden');
@@ -197,12 +173,13 @@ function showToast(message, isError = false) {
 }
 
 function hideToast() {
-  const toast = document.getElementById('toast') || document.getElementById('anime-toast');
+  const toast = document.getElementById('toast');
   if (toast) {
     toast.classList.add('hidden');
   }
 }
 
+/* ---------- Descarga de episodios ---------- */
 async function startDownload(episodes) {
   const animeName = window.animeData?.title || 'Anime';
 
@@ -246,7 +223,7 @@ async function startDownload(episodes) {
   }
 }
 
-/* Botones de descarga */
+/* Botón de descarga completa */
 document.getElementById('downloadAllBtn')?.addEventListener('click', () => {
   if (window.animeData?.episodes) {
     const eps = window.animeData.episodes.map(e => ({ number: e.number, link: e.link }));
@@ -256,30 +233,20 @@ document.getElementById('downloadAllBtn')?.addEventListener('click', () => {
   }
 });
 
-document.getElementById('downloadSelectedBtn')?.addEventListener('click', () => {
-  const checked = [...document.querySelectorAll('[data-episode] input[type="checkbox"]:checked')];
-  const eps = checked.map(cb => {
-    const card = cb.closest('[data-episode]');
-    return { number: card.dataset.episode, link: cb.value };
-  });
-  if (!eps.length) return showToast('Nada seleccionado', true);
-  startDownload(eps);
-});
-
 /* Descarga individual de episodios */
 document.addEventListener('click', function (e) {
   if (e.target.closest('.download-episode')) {
+    e.preventDefault();
     const btn = e.target.closest('.download-episode');
     const episodeLink = btn.dataset.link;
     const episodeTitle = btn.dataset.title;
     const animeName = window.animeData?.title || 'Anime';
 
-    // Crear título completo con nombre del anime
     const fullEpisodeTitle = `${animeName} - ${episodeTitle}`;
 
     const originalContent = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Descargando...</span>';
+    btn.style.pointerEvents = 'none';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
     fetch('/download-episode', {
       method: 'POST',
@@ -295,8 +262,91 @@ document.addEventListener('click', function (e) {
         showToast('Error al procesar la descarga', true);
       })
       .finally(() => {
-        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
         btn.innerHTML = originalContent;
       });
+  }
+});
+
+/* ---------- Selección múltiple de episodios ---------- */
+function updateBulkActions() {
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+  const bulkActions = document.getElementById('bulkActions');
+  const selectedCount = document.getElementById('selectedCount');
+  
+  if (selectedCount) selectedCount.textContent = checkboxes.length;
+  
+  if (bulkActions) {
+    if (checkboxes.length > 0) {
+      bulkActions.classList.remove('hidden');
+    } else {
+      bulkActions.classList.add('hidden');
+    }
+  }
+}
+
+// Event listener para checkboxes
+document.addEventListener('change', function(e) {
+  if (e.target.type === 'checkbox') {
+    updateBulkActions();
+  }
+});
+
+// Botón descargar seleccionados
+document.getElementById('downloadSelectedBtn')?.addEventListener('click', () => {
+  const checked = document.querySelectorAll('input[type="checkbox"]:checked');
+  const eps = Array.from(checked).map(cb => ({
+    number: cb.closest('[data-episode]').dataset.episode,
+    link: cb.value
+  }));
+  if (eps.length === 0) {
+    showToast('No hay episodios seleccionados', true);
+    return;
+  }
+  startDownload(eps);
+});
+
+// Botón limpiar selección
+document.getElementById('clearSelectionBtn')?.addEventListener('click', () => {
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  checkboxes.forEach(cb => cb.checked = false);
+  updateBulkActions();
+});
+
+// Funcionalidad de búsqueda
+document.getElementById('searchBtn')?.addEventListener('click', () => {
+  const searchInput = document.getElementById('episodeSearch');
+  if (searchInput.classList.contains('hidden')) {
+    searchInput.classList.remove('hidden');
+    searchInput.focus();
+  } else {
+    searchInput.classList.add('hidden');
+    searchInput.value = '';
+    // Mostrar todos los episodios
+    const episodes = document.querySelectorAll('[data-episode]');
+    episodes.forEach(ep => ep.style.display = 'block');
+  }
+});
+
+document.getElementById('episodeSearch')?.addEventListener('input', function() {
+  const query = this.value.toLowerCase();
+  const episodes = document.querySelectorAll('[data-episode]');
+  
+  episodes.forEach(episode => {
+    const episodeNumber = episode.dataset.episode;
+    const episodeTitle = `episodio ${episodeNumber}`;
+    
+    if (episodeNumber.includes(query) || episodeTitle.includes(query)) {
+      episode.style.display = 'block';
+    } else {
+      episode.style.display = 'none';
+    }
+  });
+});
+
+// Inicializar la vista con los primeros 50 episodios
+document.addEventListener('DOMContentLoaded', function() {
+  if (allEpisodes.length > 0) {
+    showEpisodesInRange(1, Math.min(50, allEpisodes.length));
   }
 });

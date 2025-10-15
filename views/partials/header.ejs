@@ -7,7 +7,7 @@
       </a>
 
       <form method="get" action="/search"
-        class="hidden lg:flex items-center bg-soft border border-line rounded-lg px-4 py-2 w-72">
+        class="lg:flex items-center bg-soft border border-line rounded-lg px-4 py-2 w-72">
         <i class="fas fa-search text-subs mr-3 cursor-pointer" id="search-icon"></i>
         <input type="search" name="q" id="search-input" placeholder="Buscar anime..."
           class="bg-transparent border-none outline-none text-text placeholder-subs flex-1">
@@ -18,16 +18,13 @@
       <button class="lg:hidden inline-flex items-center justify-center w-10 h-10 bg-soft border border-line rounded-lg text-subs hover:bg-main hover:text-fore hover:border-main transition-all duration-300" id="mobile-search-btn">
         <i class="fas fa-search text-lg"></i>
       </button>
-      <nav class="hidden lg:flex items-center gap-3">
-        <a href="/search" class="header-nav-btn">
-          <i class="fas fa-search text-lg"></i>
-          <span>Buscar</span>
-        </a>
+      <nav class="lg:flex items-center gap-3">
+
         <a href="https://animeav1.com/horario" target="_blank" class="header-nav-btn">
           <i class="fas fa-calendar text-lg"></i>
           <span>Horario</span>
         </a>
-        <a href="https://animeav1.com/catalogo" target="_blank" class="header-nav-btn">
+        <a href="/search" class="header-nav-btn">
           <i class="fas fa-th-large text-lg"></i>
           <span>Catálogo</span>
         </a>

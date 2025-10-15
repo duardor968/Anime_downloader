@@ -125,15 +125,15 @@ async function getRecentAnimes() {
   }
 }
 
-async function searchAnimes(query) {
+async function searchAnimes(query, page = 1) {
   try {
-    console.log(`[INFO] Starting search for: ${query}`);
+    console.log(`[INFO] Starting search for: ${query} (page ${page})`);
     const encodedQuery = encodeURIComponent(query);
-    const url = `https://animeav1.com/catalogo?search=${encodedQuery}`;
+    const url = `https://animeav1.com/catalogo?search=${encodedQuery}&page=${page}`;
     console.log(`[INFO] Search URL: ${url}`);
     
     const response = await makeRequest(url);
-    console.log('[INFO] Response received, processing HTML...');
+    console.log(`[INFO] Response received, processing HTML...`);
     
     const $ = cheerio.load(response.data);
     const animes = [];
@@ -177,14 +177,76 @@ async function searchAnimes(query) {
       }
     });
     
-    console.log(`[INFO] Search completed. Found ${animes.length} animes`);
-    return animes;
+    // Extraer información de paginación desde JSON embebido
+    let totalResults = 0;
+    let totalPages = 1;
+    let hasNextPage = false;
+    let hasPrevPage = page > 1;
+    
+    // Buscar datos JSON en los scripts
+    const scriptTags = $('script').toArray();
+    for (const script of scriptTags) {
+      const scriptContent = $(script).html();
+      if (scriptContent && scriptContent.includes('totalRecords')) {
+        try {
+          // Buscar patrón: totalRecords:42,categoriesIdsMap
+          const totalMatch = scriptContent.match(/totalRecords:(\d+)/);
+          const pagesMatch = scriptContent.match(/totalPages:(\d+)/);
+          
+          if (totalMatch && pagesMatch) {
+            totalResults = parseInt(totalMatch[1]);
+            totalPages = parseInt(pagesMatch[1]);
+            console.log(`[INFO] Found pagination from JSON: ${totalResults} results, ${totalPages} pages`);
+            break;
+          }
+        } catch (e) {
+          // Continuar si hay error parseando
+        }
+      }
+    }
+    
+    // Fallback: extraer del HTML si no se encontró en JSON
+    if (totalResults === 0) {
+      const resultsText = $('.font-bold').first().text().trim();
+      if (resultsText && /^\d+$/.test(resultsText)) {
+        totalResults = parseInt(resultsText);
+        totalPages = Math.ceil(totalResults / 20);
+      }
+    }
+    
+    hasNextPage = page < totalPages;
+    
+    const paginationInfo = {
+      currentPage: page,
+      totalPages,
+      totalRecords: totalResults,
+      hasNextPage,
+      hasPrevPage,
+      resultsPerPage: animes.length
+    };
+    
+    console.log(`[INFO] Search completed. Found ${animes.length} animes on page ${page} of ${totalPages} (total: ${totalResults})`);
+    
+    return {
+      results: animes,
+      pagination: paginationInfo
+    };
   } catch (error) {
-    console.error(`[ERROR] Search failed for query '${query}':`, error.message);
+    console.error(`[ERROR] Search failed for query '${query}' page ${page}:`, error.message);
     if (error.response) {
       console.error('[ERROR] HTTP Status:', error.response.status);
     }
-    return [];
+    return {
+      results: [],
+      pagination: {
+        currentPage: page,
+        totalPages: 1,
+        totalResults: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        resultsPerPage: 0
+      }
+    };
   }
 }
 
@@ -318,52 +380,108 @@ async function getAnimeDetails(slug) {
     });
     
     console.log('[INFO] Extracting episodes...');
-    const episodes = [];
+    let allEpisodes = [];
     
-    // Buscar episodios con selectores más amplios
-    $('article.group\\/item, .episode-card, article[data-episode]').each((index, element) => {
-      const $element = $(element);
-      
-      // Extraer número de episodio con múltiples selectores
-      let episodeNumber = $element.find('.text-lead.font-bold, .episode-number, [data-episode]').text().trim() ||
-                         $element.attr('data-episode') ||
-                         $element.find('span.text-lead').text().trim();
-      
-      // Limpiar número de episodio
-      episodeNumber = episodeNumber.replace(/[^\d]/g, '');
-      
-      // Extraer imagen del episodio (screenshot)
-      const screenshot = $element.find('img').first().attr('src');
-      
-      // Extraer enlace del episodio
-      const episodeLink = $element.find('a').attr('href');
-      
-      if (episodeNumber && episodeLink) {
-        episodes.push({
-          number: episodeNumber,
-          title: `Episodio ${episodeNumber}`,
-          screenshot: screenshot ? (screenshot.startsWith('http') ? screenshot : `https://animeav1.com${screenshot}`) : null,
-          link: episodeLink.startsWith('http') ? episodeLink : `https://animeav1.com${episodeLink}`,
-          slug: episodeLink.split('/').pop()
-        });
+    // Primero, intentar obtener el número total de episodios desde los datos JSON embebidos
+    let totalEpisodes = 0;
+    const episodeScriptTags = $('script').toArray();
+    for (const script of episodeScriptTags) {
+      const scriptContent = $(script).html();
+      if (scriptContent && scriptContent.includes('episodesCount')) {
+        try {
+          const episodeCountMatch = scriptContent.match(/"?episodesCount"?\s*:\s*(\d+)/);
+          if (episodeCountMatch) {
+            totalEpisodes = parseInt(episodeCountMatch[1]);
+            console.log(`[INFO] Found total episodes from JSON: ${totalEpisodes}`);
+            break;
+          }
+        } catch (e) {
+          // Continuar si hay error parseando
+        }
       }
-    });
+    }
     
-    // Si no se encontraron episodios, generar algunos por defecto
-    if (episodes.length === 0) {
-      for (let i = 1; i <= 12; i++) {
-        episodes.push({
+    // Extraer el ID numérico del anime desde los datos JSON
+    let animeId = null;
+    for (const script of episodeScriptTags) {
+      const scriptContent = $(script).html();
+      if (scriptContent && scriptContent.includes('id:')) {
+        try {
+          const idMatch = scriptContent.match(/id:\s*(\d+)/) || scriptContent.match(/"id"\s*:\s*(\d+)/);
+          if (idMatch) {
+            animeId = idMatch[1];
+            console.log(`[INFO] Found animeId: ${animeId}`);
+            break;
+          }
+        } catch (e) {
+          // Continuar si hay error parseando
+        }
+      }
+    }
+    
+    // Si encontramos el total de episodios, generar todos los episodios
+    if (totalEpisodes > 0) {
+      console.log(`[INFO] Generating ${totalEpisodes} episodes for ${slug}`);
+      
+      for (let i = 1; i <= totalEpisodes; i++) {
+        allEpisodes.push({
           number: i.toString(),
           title: `Episodio ${i}`,
-          screenshot: null,
+          screenshot: animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/${i}.jpg` : null,
           link: `https://animeav1.com/media/${slug}/${i}`,
           slug: i.toString()
         });
       }
+    } else {
+      // Fallback: scrapear episodios de la página actual
+      console.log('[INFO] Scraping episodes from current page...');
+      
+      // Buscar episodios con selectores más amplios
+      $('article.group\\/item, .episode-card, article[data-episode]').each((index, element) => {
+        const $element = $(element);
+        
+        // Extraer número de episodio con múltiples selectores
+        let episodeNumber = $element.find('.text-lead.font-bold, .episode-number, [data-episode]').text().trim() ||
+                           $element.attr('data-episode') ||
+                           $element.find('span.text-lead').text().trim();
+        
+        // Limpiar número de episodio
+        episodeNumber = episodeNumber.replace(/[^\d]/g, '');
+        
+        // Extraer imagen del episodio (screenshot)
+        const screenshot = $element.find('img').first().attr('src');
+        
+        // Extraer enlace del episodio
+        const episodeLink = $element.find('a').attr('href');
+        
+        if (episodeNumber && episodeLink) {
+          allEpisodes.push({
+            number: episodeNumber,
+            title: `Episodio ${episodeNumber}`,
+            screenshot: screenshot ? (screenshot.startsWith('http') ? screenshot : `https://animeav1.com${screenshot}`) : null,
+            link: episodeLink.startsWith('http') ? episodeLink : `https://animeav1.com${episodeLink}`,
+            slug: episodeLink.split('/').pop()
+          });
+        }
+      });
+      
+      // Si no se encontraron episodios, generar algunos por defecto
+      if (allEpisodes.length === 0) {
+        console.log('[INFO] No episodes found, generating default episodes...');
+        for (let i = 1; i <= 12; i++) {
+          allEpisodes.push({
+            number: i.toString(),
+            title: `Episodio ${i}`,
+            screenshot: null,
+            link: `https://animeav1.com/media/${slug}/${i}`,
+            slug: i.toString()
+          });
+        }
+      }
     }
     
     // Ordenar episodios por número
-    episodes.sort((a, b) => {
+    allEpisodes.sort((a, b) => {
       const numA = parseInt(a.number) || 0;
       const numB = parseInt(b.number) || 0;
       return numA - numB;
@@ -373,6 +491,7 @@ async function getAnimeDetails(slug) {
       title,
       alternativeTitle,
       slug,
+      animeId: animeId, // ID numérico para screenshots
       poster: poster ? (poster.startsWith('http') ? poster : `https://animeav1.com${poster}`) : null,
       backdrop: backdrop ? (backdrop.startsWith('http') ? backdrop : `https://animeav1.com${backdrop}`) : null,
       description,
@@ -383,9 +502,9 @@ async function getAnimeDetails(slug) {
       genres: [...new Set(genres)].slice(0, 6), // Eliminar duplicados y limitar
       malRating: malRating || '0.0',
       malVotes: malVotes || '0',
-      episodes,
-      totalEpisodes: episodes.length,
-      episodeRanges: generateEpisodeRanges(episodes.length),
+      episodes: allEpisodes,
+      totalEpisodes: allEpisodes.length,
+      episodeRanges: generateEpisodeRanges(allEpisodes.length),
       trailerUrl: trailerUrl || null
     };
     
@@ -436,7 +555,7 @@ async function getAnimeDetails(slug) {
     console.log(`[INFO] - Type: ${type}`);
     console.log(`[INFO] - Year: ${year}`);
     console.log(`[INFO] - Status: ${status}`);
-    console.log(`[INFO] - Episodes: ${episodes.length}`);
+    console.log(`[INFO] - Episodes: ${allEpisodes.length}`);
     console.log(`[INFO] - Related animes: ${relatedAnimes.length}`);
 
     
@@ -469,4 +588,264 @@ function generateEpisodeRanges(totalEpisodes) {
   return ranges;
 }
 
-module.exports = { getRecentAnimes, searchAnimes, getAnimeDetails };
+// Función para obtener los filtros disponibles dinámicamente
+async function getAvailableFilters() {
+  try {
+    console.log('[INFO] Fetching available filters from animeav1.com');
+    const response = await makeRequest('https://animeav1.com/catalogo');
+    
+    if (!response.data) {
+      console.error('[ERROR] No content received for filters');
+      return null;
+    }
+
+    // Hardcoded filters basados en la estructura observada
+    // Esto es más confiable que parsear el JavaScript dinámico
+    const filtersData = {
+      categories: [
+        { id: '1', name: 'TV Anime', slug: 'tv-anime' },
+        { id: '2', name: 'Película', slug: 'pelicula' },
+        { id: '3', name: 'OVA', slug: 'ova' },
+        { id: '4', name: 'Especial', slug: 'especial' }
+      ],
+      genres: [
+        { id: '1', name: 'Acción', slug: 'accion' },
+        { id: '2', name: 'Aventura', slug: 'aventura' },
+        { id: '3', name: 'Ciencia Ficción', slug: 'ciencia-ficcion' },
+        { id: '4', name: 'Comedia', slug: 'comedia' },
+        { id: '5', name: 'Deportes', slug: 'deportes' },
+        { id: '6', name: 'Drama', slug: 'drama' },
+        { id: '7', name: 'Fantasía', slug: 'fantasia' },
+        { id: '8', name: 'Misterio', slug: 'misterio' },
+        { id: '9', name: 'Recuentos de la Vida', slug: 'recuentos-de-la-vida' },
+        { id: '10', name: 'Romance', slug: 'romance' },
+        { id: '11', name: 'Seinen', slug: 'seinen' },
+        { id: '12', name: 'Shoujo', slug: 'shoujo' },
+        { id: '13', name: 'Shounen', slug: 'shounen' },
+        { id: '14', name: 'Sobrenatural', slug: 'sobrenatural' },
+        { id: '15', name: 'Suspenso', slug: 'suspenso' },
+        { id: '16', name: 'Terror', slug: 'terror' },
+        { id: '17', name: 'Antropomórfico', slug: 'antropomorfico' },
+        { id: '18', name: 'Artes Marciales', slug: 'artes-marciales' },
+        { id: '19', name: 'Carreras', slug: 'carreras' },
+        { id: '20', name: 'Detectives', slug: 'detectives' },
+        { id: '21', name: 'Ecchi', slug: 'ecchi' },
+        { id: '22', name: 'Elenco Adulto', slug: 'elenco-adulto' },
+        { id: '23', name: 'Escolares', slug: 'escolares' },
+        { id: '24', name: 'Espacial', slug: 'espacial' },
+        { id: '25', name: 'Gore', slug: 'gore' },
+        { id: '26', name: 'Gourmet', slug: 'gourmet' },
+        { id: '27', name: 'Harem', slug: 'harem' },
+        { id: '28', name: 'Histórico', slug: 'historico' },
+        { id: '29', name: 'Idols (Hombre)', slug: 'idols-hombre' },
+        { id: '30', name: 'Idols (Mujer)', slug: 'idols-mujer' },
+        { id: '31', name: 'Infantil', slug: 'infantil' },
+        { id: '32', name: 'Isekai', slug: 'isekai' },
+        { id: '33', name: 'Josei', slug: 'josei' },
+        { id: '34', name: 'Juegos Estrategia', slug: 'juegos-estrategia' },
+        { id: '35', name: 'Mahou Shoujo', slug: 'mahou-shoujo' },
+        { id: '36', name: 'Mecha', slug: 'mecha' },
+        { id: '37', name: 'Militar', slug: 'militar' },
+        { id: '38', name: 'Mitología', slug: 'mitologia' },
+        { id: '39', name: 'Música', slug: 'musica' },
+        { id: '40', name: 'Parodia', slug: 'parodia' },
+        { id: '41', name: 'Psicológico', slug: 'psicologico' },
+        { id: '42', name: 'Samurai', slug: 'samurai' },
+        { id: '43', name: 'Shoujo Ai', slug: 'shoujo-ai' },
+        { id: '44', name: 'Shounen Ai', slug: 'shounen-ai' },
+        { id: '45', name: 'Superpoderes', slug: 'superpoderes' },
+        { id: '46', name: 'Vampiros', slug: 'vampiros' }
+      ],
+      years: (() => {
+        const years = [];
+        for (let year = 2025; year >= 1990; year--) {
+          years.push(year);
+        }
+        return years;
+      })(),
+      status: [
+        { id: 'finished', name: 'Finalizado', slug: 'finished' },
+        { id: 'airing', name: 'En emisión', slug: 'airing' },
+        { id: 'upcoming', name: 'Próximamente', slug: 'upcoming' }
+      ],
+      orderOptions: [
+        { id: 'default', name: 'Predeterminado', slug: 'default' },
+        { id: 'title', name: 'Título A-Z', slug: 'title' },
+        { id: 'title_desc', name: 'Título Z-A', slug: 'title_desc' },
+        { id: 'year', name: 'Año (Nuevo)', slug: 'year' },
+        { id: 'year_desc', name: 'Año (Antiguo)', slug: 'year_desc' },
+        { id: 'rating', name: 'Puntuación', slug: 'rating' }
+      ]
+    };
+    
+    console.log(`[INFO] Filters loaded: ${filtersData.categories.length} categories, ${filtersData.genres.length} genres, ${filtersData.years.length} years`);
+    return filtersData;
+    
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch filters:', error.message);
+    return null;
+  }
+}
+
+// Función de búsqueda con filtros
+async function searchAnimesWithFilters(options = {}) {
+  try {
+    const {
+      query = '',
+      page = 1,
+      category = '',
+      genre = '',
+      year = '',
+      status = '',
+      letter = '',
+      order = 'default'
+    } = options;
+    
+    console.log(`[INFO] Starting filtered search with options:`, options);
+    
+    // Construir URL con parámetros
+    const params = new URLSearchParams();
+    
+    if (query) params.append('search', query);
+    if (page > 1) params.append('page', page.toString());
+    if (category) params.append('category', category);
+    if (genre) params.append('genre', genre);
+    if (year) params.append('year', year);
+    if (options.minYear) params.append('minYear', options.minYear);
+    if (options.maxYear) params.append('maxYear', options.maxYear);
+    if (status) params.append('status', status);
+    if (letter) params.append('letter', letter);
+    if (order && order !== 'default') params.append('order', order);
+    
+    const url = `https://animeav1.com/catalogo${params.toString() ? '?' + params.toString() : ''}`;
+    console.log(`[INFO] Search URL: ${url}`);
+    
+    const response = await makeRequest(url);
+    console.log(`[INFO] Response received, processing HTML...`);
+    
+    const $ = cheerio.load(response.data);
+    const animes = [];
+    
+    // Buscar en la estructura: main > section > article
+    $('main section article.group\\/item').each((index, element) => {
+      const $element = $(element);
+      
+      // Extraer título del h3 dentro del header
+      const title = $element.find('header h3').text().trim();
+      
+      // Extraer imagen (primer img encontrado)
+      const poster = $element.find('img').first().attr('src');
+      
+      // Extraer enlace del elemento <a> que contiene el href
+      const linkElement = $element.find('a[href^="/media/"]');
+      const link = linkElement.attr('href');
+      
+      // Extraer slug del enlace
+      let slug = '';
+      if (link) {
+        slug = link.replace('/media/', '');
+      }
+      
+      // Extraer tipo de anime (TV Anime, Movie, etc.)
+      const animeType = $element.find('.text-xs.font-bold.text-subs').text().trim();
+      
+      // Extraer descripción si está disponible
+      const description = $element.find('.line-clamp-6').text().trim();
+      
+      if (title && poster && link) {
+        console.log(`[DEBUG] Found anime: ${title}`);
+        animes.push({ 
+          title, 
+          slug, 
+          poster: poster.startsWith('http') ? poster : `https://animeav1.com${poster}`,
+          link: link.startsWith('http') ? link : `https://animeav1.com${link}`,
+          type: animeType || 'Anime',
+          description: description || ''
+        });
+      }
+    });
+    
+    // Extraer información de paginación desde JSON embebido
+    let totalResults = 0;
+    let totalPages = 1;
+    let hasNextPage = false;
+    let hasPrevPage = page > 1;
+    
+    // Buscar datos JSON en los scripts
+    const scriptTags = $('script').toArray();
+    for (const script of scriptTags) {
+      const scriptContent = $(script).html();
+      if (scriptContent && scriptContent.includes('totalRecords')) {
+        try {
+          // Buscar patrón: totalRecords:42,categoriesIdsMap
+          const totalMatch = scriptContent.match(/totalRecords:(\d+)/);
+          const pagesMatch = scriptContent.match(/totalPages:(\d+)/);
+          
+          if (totalMatch && pagesMatch) {
+            totalResults = parseInt(totalMatch[1]);
+            totalPages = parseInt(pagesMatch[1]);
+            console.log(`[INFO] Found pagination from JSON: ${totalResults} results, ${totalPages} pages`);
+            break;
+          }
+        } catch (e) {
+          // Continuar si hay error parseando
+        }
+      }
+    }
+    
+    // Fallback: extraer del HTML si no se encontró en JSON
+    if (totalResults === 0) {
+      const resultsText = $('.font-bold').first().text().trim();
+      if (resultsText && /^\d+$/.test(resultsText)) {
+        totalResults = parseInt(resultsText);
+        totalPages = Math.ceil(totalResults / 20);
+      }
+    }
+    
+    hasNextPage = page < totalPages;
+    
+    const paginationInfo = {
+      currentPage: page,
+      totalPages,
+      totalRecords: totalResults,
+      hasNextPage,
+      hasPrevPage,
+      resultsPerPage: animes.length
+    };
+    
+    console.log(`[INFO] Filtered search completed. Found ${animes.length} animes on page ${page} of ${totalPages} (total: ${totalResults})`);
+    
+    return {
+      results: animes,
+      pagination: paginationInfo,
+      appliedFilters: {
+        query,
+        category,
+        genre,
+        year,
+        status,
+        letter,
+        order
+      }
+    };
+  } catch (error) {
+    console.error(`[ERROR] Filtered search failed:`, error.message);
+    if (error.response) {
+      console.error('[ERROR] HTTP Status:', error.response.status);
+    }
+    return {
+      results: [],
+      pagination: {
+        currentPage: page,
+        totalPages: 1,
+        totalRecords: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        resultsPerPage: 0
+      },
+      appliedFilters: options
+    };
+  }
+}
+
+module.exports = { getRecentAnimes, searchAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters };

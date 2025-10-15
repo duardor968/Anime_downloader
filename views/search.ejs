@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buscar Anime - AnimeHub</title>
+  <title>Catálogo de Animes - AnimeHub</title>
   <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
   <link rel="stylesheet" href="/css/tailwind.css">
   <link rel="stylesheet" href="/css/custom-theme.css">
@@ -21,9 +21,9 @@
         <div class="max-w-2xl mx-auto">
           <h1 class="text-4xl font-bold text-lead mb-4 flex items-center justify-center gap-3">
             <i class="fas fa-search text-main"></i>
-            <span>Buscar Anime</span>
+            <span>Catálogo de Animes</span>
           </h1>
-          <p class="text-lg text-subs mb-8">Encuentra tu anime favorito entre miles de títulos</p>
+          <p class="text-lg text-subs mb-8">Explora y filtra nuestra colección completa</p>
           
           <div class="max-w-lg mx-auto">
             <form method="get" action="/search" autocomplete="off">
@@ -46,96 +46,335 @@
         </div>
       </section>
 
-      <!-- Search Results Section -->
-      <% if (hasSearched) { %>
-        <section>
-          <div class="mb-6">
-            <% if (searchResults.length > 0) { %>
-              <h2 class="text-2xl font-bold text-lead mb-2 flex items-center gap-3">
-                <i class="fas fa-check-circle text-wins"></i>
-                <span>Resultados para "<%= query %>"</span>
-              </h2>
-              <p class="text-sm text-subs"><%= searchResults.length %> animes encontrados</p>
-            <% } else { %>
-              <h2 class="text-2xl font-bold text-lead mb-2 flex items-center gap-3">
-                <i class="fas fa-exclamation-circle text-warn"></i>
-                <span>Sin resultados para "<%= query %>"</span>
-              </h2>
+      <!-- Filters Section -->
+      <section class="mb-8">
+        <!-- Alphabetic Filter -->
+        <div class="flex gap-2 flex-wrap justify-center mb-6">
+          <button class="bg-soft border border-line rounded px-3 py-1 text-sm font-bold text-subs hover:bg-main hover:text-fore hover:border-main transition-colors <%= currentLetter === '#' ? 'bg-main text-fore border-main' : '' %>" 
+                  onclick="filterByLetter('#')">#</button>
+          <% for (let i = 65; i <= 90; i++) { %>
+            <% const letter = String.fromCharCode(i); %>
+            <button class="bg-soft border border-line rounded px-3 py-1 text-sm font-bold text-subs hover:bg-main hover:text-fore hover:border-main transition-colors <%= currentLetter === letter ? 'bg-main text-fore border-main' : '' %>" 
+                    onclick="filterByLetter('<%= letter %>')"><%= letter %></button>
+          <% } %>
+        </div>
+
+        <!-- Advanced Filters -->
+        <div class="flex flex-wrap gap-4 mb-6">
+          <select class="bg-soft border border-line rounded-lg px-3 py-2 text-text focus:border-main focus:outline-none w-44" id="categoryFilter">
+            <option value="">Tipo: Todos</option>
+            <% if (filters && filters.categories) { %>
+              <% filters.categories.forEach(category => { %>
+                <option value="<%= category.slug %>" <%= currentCategory === category.slug ? 'selected' : '' %>><%= category.name %></option>
+              <% }); %>
             <% } %>
+          </select>
+
+          <select class="bg-soft border border-line rounded-lg px-3 py-2 text-text focus:border-main focus:outline-none w-44" id="genreFilter">
+            <option value="">Género: Todos</option>
+            <% if (filters && filters.genres) { %>
+              <% filters.genres.forEach(genre => { %>
+                <option value="<%= genre.slug %>" <%= currentGenre === genre.slug ? 'selected' : '' %>><%= genre.name %></option>
+              <% }); %>
+            <% } %>
+          </select>
+
+          <div class="relative">
+            <button type="button" id="yearDropdownBtn" class="bg-soft border border-line rounded-lg px-3 py-2 text-text focus:border-main focus:outline-none flex items-center justify-between w-44">
+              <span id="yearDropdownLabel">Año: Seleccionar</span>
+              <i class="fas fa-chevron-down text-xs transition-transform" id="yearDropdownIcon"></i>
+            </button>
+            <div id="yearDropdown" class="absolute top-full left-0 mt-1 bg-soft border border-line rounded-lg p-4 shadow-lg z-50 w-44 hidden">
+              <div>
+                <label class="text-sm text-subs mb-2 block">Rango de años</label>
+                <div class="dual-range-slider mb-3">
+                  <input type="range" id="minYear" min="1990" max="2025" value="1990" class="range-input range-min">
+                  <input type="range" id="maxYear" min="1990" max="2025" value="2025" class="range-input range-max">
+                  <div class="slider-track"></div>
+                  <div class="slider-range" id="sliderRange"></div>
+                </div>
+                <div class="flex justify-between text-xs text-subs">
+                  <span id="minYearValue">1990</span>
+                  <span id="maxYearValue">2025</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <% if (searchResults.length === 0) { %>
-            <div class="text-center py-16 bg-soft border border-line rounded-lg">
-              <div class="text-4xl mb-4 text-line">
-                <i class="fas fa-search"></i>
-              </div>
-              <h3 class="text-xl text-lead mb-2">No se encontraron resultados</h3>
-              <p class="text-subs mb-6">Intenta con otros términos de búsqueda</p>
-              <div class="text-left max-w-md mx-auto">
-                <p class="text-sm font-semibold text-lead mb-2">Sugerencias:</p>
-                <ul class="text-sm text-subs space-y-1">
-                  <li>• Usa términos más generales</li>
-                  <li>• Verifica la ortografía</li>
-                  <li>• Intenta con el nombre en japonés o inglés</li>
-                  <li>• Busca por género o año</li>
-                </ul>
-              </div>
-            </div>
+          <select class="bg-soft border border-line rounded-lg px-3 py-2 text-text focus:border-main focus:outline-none" id="statusFilter">
+            <option value="">Estado: Todos</option>
+            <option value="completed" <%= currentStatus === 'completed' ? 'selected' : '' %>>Completado</option>
+            <option value="ongoing" <%= currentStatus === 'ongoing' ? 'selected' : '' %>>En emisión</option>
+            <option value="upcoming" <%= currentStatus === 'upcoming' ? 'selected' : '' %>>Próximamente</option>
+          </select>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <button class="bg-main text-fore px-6 py-2 rounded-lg font-bold hover:bg-main/90 transition-colors" onclick="applyFilters()">
+            <i class="fas fa-filter mr-2"></i>Aplicar Filtros
+          </button>
+          
+          <select class="bg-soft border border-line rounded-lg px-3 py-2 text-text focus:border-main focus:outline-none" id="sortFilter">
+            <option value="default" <%= currentOrder === 'default' ? 'selected' : '' %>>Ordenar: Predeterminado</option>
+            <option value="title" <%= currentOrder === 'title' ? 'selected' : '' %>>Título A-Z</option>
+            <option value="year" <%= currentOrder === 'year' ? 'selected' : '' %>>Año</option>
+            <option value="rating" <%= currentOrder === 'rating' ? 'selected' : '' %>>Puntuación</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Results Section -->
+      <section>
+        <div class="mb-6">
+          <% if (animes && animes.length > 0) { %>
+            <h2 class="text-2xl font-bold text-lead mb-2 flex items-center gap-3">
+              <i class="fas fa-check-circle text-wins"></i>
+              <span>Resultados del Catálogo</span>
+            </h2>
+            <p class="text-sm text-subs"><%= totalResults || 0 %> animes encontrados</p>
           <% } else { %>
-            <div class="search-results grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 xl:gap-6">
-              <% searchResults.forEach((anime, index) => { %>
-                <article class="group/item relative text-body">
-                  <div class="relative bg-current">
-                    <figure class="rounded-lg bg-black">
-                      <img class="aspect-poster w-full rounded-lg object-cover" src="<%= anime.poster %>" alt="Portada de <%= anime.title %>" loading="lazy"/>
-                    </figure>
-                    <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-current pe-2 pt-2">
-                      <div class="rounded bg-line px-2 py-1 text-xs font-bold text-subs">TV Anime</div>
+            <h2 class="text-2xl font-bold text-lead mb-2 flex items-center gap-3">
+              <i class="fas fa-exclamation-circle text-warn"></i>
+              <span>Sin resultados</span>
+            </h2>
+          <% } %>
+        </div>
+
+        <% if (animes && animes.length === 0) { %>
+          <div class="text-center py-16 bg-soft border border-line rounded-lg">
+            <div class="text-4xl mb-4 text-line">
+              <i class="fas fa-search"></i>
+            </div>
+            <h3 class="text-xl text-lead mb-2">No se encontraron resultados</h3>
+            <p class="text-subs mb-6">Intenta con otros filtros de búsqueda</p>
+            <div class="text-left max-w-md mx-auto">
+              <p class="text-sm font-semibold text-lead mb-2">Sugerencias:</p>
+              <ul class="text-sm text-subs space-y-1">
+                <li>• Usa filtros más generales</li>
+                <li>• Verifica los términos de búsqueda</li>
+                <li>• Intenta con otros géneros o años</li>
+                <li>• Limpia todos los filtros</li>
+              </ul>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 xl:gap-6">
+            <% animes.forEach((anime, index) => { %>
+              <article class="group/item relative text-body">
+                <div class="relative bg-current">
+                  <figure class="rounded-lg bg-black">
+                    <img class="aspect-poster w-full rounded-lg object-cover" 
+                         src="<%= anime.poster %>" 
+                         alt="Portada de <%= anime.title %>" 
+                         loading="lazy" />
+                  </figure>
+                  <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-current pe-2 pt-2">
+                    <div class="rounded bg-line px-2 py-1 text-xs font-bold text-subs">
+                      <%= anime.type || 'TV Anime' %>
                     </div>
                   </div>
-                  <header class="grid items-start gap-1 p-2">
-                    <h3 class="line-clamp-2 text-sm font-bold text-lead"><%= anime.title %></h3>
-                  </header>
-                  <a class="absolute inset-0 z-20 grid place-content-center" href="/media/<%= anime.slug %>">
-                    <span class="sr-only">Ver <%= anime.title %></span>
-                  </a>
-                </article>
-              <% }); %>
-            </div>
-          <% } %>
-        </section>
-      <% } else { %>
+                </div>
+                <header class="grid items-start gap-1 p-2">
+                  <h3 class="line-clamp-2 text-sm font-bold text-lead">
+                    <%= anime.title %>
+                  </h3>
+                </header>
+                <a class="absolute inset-0 z-20 grid place-content-center" 
+                   href="/media/<%= anime.slug %>">
+                  <span class="sr-only">Ver <%= anime.title %></span>
+                </a>
+              </article>
+            <% }); %>
+          </div>
+        <% } %>
 
-      <% } %>
+        <!-- Pagination -->
+        <% if (pagination && pagination.totalPages > 1) { %>
+          <div class="flex flex-wrap gap-2 justify-center mt-8">
+            <% if (pagination.currentPage > 1) { %>
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+                 href="<%= buildPaginationUrl(pagination.currentPage - 1, req.query) %>">«</a>
+            <% } %>
+
+            <% if (pagination.currentPage > 3) { %>
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+                 href="<%= buildPaginationUrl(1, req.query) %>">1</a>
+              <% if (pagination.currentPage > 4) { %>
+                <span class="px-3 py-2 text-subs">...</span>
+              <% } %>
+            <% } %>
+
+            <% 
+              const startPage = Math.max(1, pagination.currentPage - 2);
+              const endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+            %>
+            
+            <% for (let i = startPage; i <= endPage; i++) { %>
+              <% if (i === pagination.currentPage) { %>
+                <span class="bg-main text-fore border border-main rounded px-3 py-2 font-bold"><%= i %></span>
+              <% } else { %>
+                <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+                   href="<%= buildPaginationUrl(i, req.query) %>"><%= i %></a>
+              <% } %>
+            <% } %>
+
+            <% if (pagination.currentPage < pagination.totalPages - 2) { %>
+              <% if (pagination.currentPage < pagination.totalPages - 3) { %>
+                <span class="px-3 py-2 text-subs">...</span>
+              <% } %>
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+                 href="<%= buildPaginationUrl(pagination.totalPages, req.query) %>"><%= pagination.totalPages %></a>
+            <% } %>
+
+            <% if (pagination.currentPage < pagination.totalPages) { %>
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+                 href="<%= buildPaginationUrl(pagination.currentPage + 1, req.query) %>">»</a>
+            <% } %>
+          </div>
+        <% } %>
+      </section>
     </div>
   </main>
 
   <%- include('partials/footer') %>
-  
-  <!-- Mobile Navigation -->
-  <nav class="bg-body sticky bottom-0 z-30 lg:hidden border-t border-line/20">
-    <div class="container flex px-0">
-      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-subs hover:text-main" href="/">
-        <i class="fas fa-home text-2xl mb-1"></i>
-        <span class="text-xs">Inicio</span>
-      </a>
-      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-main" href="/search">
-        <i class="fas fa-search text-2xl mb-1"></i>
-        <span class="text-xs">Buscar</span>
-      </a>
-      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-subs hover:text-main" href="/catalogo">
-        <i class="fas fa-th-large text-2xl mb-1"></i>
-        <span class="text-xs">Catálogo</span>
-      </a>
-      <a class="flex flex-1 flex-col items-center justify-center h-16 px-0 text-subs hover:text-main" href="/horario">
-        <i class="fas fa-calendar text-2xl mb-1"></i>
-        <span class="text-xs">Horario</span>
-      </a>
-    </div>
-  </nav>
-  
+
   <script>
+    function filterByLetter(letter) {
+      const url = new URL(window.location);
+      url.searchParams.set('letter', letter);
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    function applyFilters() {
+      const url = new URL(window.location);
+      
+      const category = document.getElementById('categoryFilter').value;
+      const genre = document.getElementById('genreFilter').value;
+      const minYear = document.getElementById('minYear').value;
+      const maxYear = document.getElementById('maxYear').value;
+      const status = document.getElementById('statusFilter').value;
+      const order = document.getElementById('sortFilter').value;
+      
+      if (category) url.searchParams.set('category', category);
+      else url.searchParams.delete('category');
+      
+      if (genre) url.searchParams.set('genre', genre);
+      else url.searchParams.delete('genre');
+      
+      if (minYear !== '1990') url.searchParams.set('minYear', minYear);
+      else url.searchParams.delete('minYear');
+      
+      if (maxYear !== '2025') url.searchParams.set('maxYear', maxYear);
+      else url.searchParams.delete('maxYear');
+      
+      if (status) url.searchParams.set('status', status);
+      else url.searchParams.delete('status');
+      
+      if (order && order !== 'default') url.searchParams.set('order', order);
+      else url.searchParams.delete('order');
+      
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }
+
+    // Year dropdown functionality
+    function toggleYearDropdown() {
+      const dropdown = document.getElementById('yearDropdown');
+      const icon = document.getElementById('yearDropdownIcon');
+      
+      if (dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+      } else {
+        dropdown.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+      }
+    }
+    
+
+    
+    function updateYearDisplay() {
+      const min = parseInt(document.getElementById('minYear').value);
+      const max = parseInt(document.getElementById('maxYear').value);
+      const label = document.getElementById('yearDropdownLabel');
+      const minValue = document.getElementById('minYearValue');
+      const maxValue = document.getElementById('maxYearValue');
+      const sliderRange = document.getElementById('sliderRange');
+      
+      minValue.textContent = min;
+      maxValue.textContent = max;
+      
+      if (min === 1990 && max === 2025) {
+        label.textContent = 'Año: Seleccionar';
+      } else if (min === max) {
+        label.textContent = `Año: ${min}`;
+      } else {
+        label.textContent = `Año: ${min} - ${max}`;
+      }
+      
+      const minPercent = ((min - 1990) / (2025 - 1990)) * 100;
+      const maxPercent = ((max - 1990) / (2025 - 1990)) * 100;
+      sliderRange.style.left = minPercent + '%';
+      sliderRange.style.width = (maxPercent - minPercent) + '%';
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+      // Year dropdown setup
+      const yearBtn = document.getElementById('yearDropdownBtn');
+      const minYearSlider = document.getElementById('minYear');
+      const maxYearSlider = document.getElementById('maxYear');
+      
+      yearBtn.addEventListener('click', toggleYearDropdown);
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('yearDropdown');
+        const btn = document.getElementById('yearDropdownBtn');
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+          dropdown.classList.add('hidden');
+          document.getElementById('yearDropdownIcon').style.transform = 'rotate(0deg)';
+        }
+      });
+      
+      minYearSlider.addEventListener('input', function() {
+        if (parseInt(this.value) > parseInt(maxYearSlider.value)) {
+          maxYearSlider.value = this.value;
+        }
+        updateYearDisplay();
+      });
+      
+      maxYearSlider.addEventListener('input', function() {
+        if (parseInt(this.value) < parseInt(minYearSlider.value)) {
+          minYearSlider.value = this.value;
+        }
+        updateYearDisplay();
+      });
+      
+      // Auto-close dropdown on change
+      minYearSlider.addEventListener('change', function() {
+        setTimeout(() => {
+          document.getElementById('yearDropdown').classList.add('hidden');
+          document.getElementById('yearDropdownIcon').style.transform = 'rotate(0deg)';
+        }, 300);
+      });
+      
+      maxYearSlider.addEventListener('change', function() {
+        setTimeout(() => {
+          document.getElementById('yearDropdown').classList.add('hidden');
+          document.getElementById('yearDropdownIcon').style.transform = 'rotate(0deg)';
+        }, 300);
+      });
+      
+      // Set initial values from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlMinYear = urlParams.get('minYear');
+      const urlMaxYear = urlParams.get('maxYear');
+      
+      if (urlMinYear) minYearSlider.value = urlMinYear;
+      if (urlMaxYear) maxYearSlider.value = urlMaxYear;
+      updateYearDisplay();
+      
       // Image retry logic
       document.querySelectorAll('img').forEach(img => {
         let retries = 0;

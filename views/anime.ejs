@@ -156,78 +156,67 @@
 
       <!-- Episodes Section -->
       <section class="bg-radial-[closest-side] from-mute col-span-full mt-12 py-3">
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 p-4 bg-soft border border-line rounded-lg">
-          <h2 class="text-xl font-semibold text-lead flex items-center gap-3">
-            <i class="fas fa-play-circle"></i>
-            <span>Episodios</span>
-            <span class="text-sm text-subs">(<%= anime.totalEpisodes %>)</span>
-          </h2>
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+          <h2 class="text-lead text-2xl font-bold">Episodios</h2>
           
-          <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-2">
             <% if (anime.episodeRanges && anime.episodeRanges.length > 1) { %>
-              <select id="episodeRange" class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text focus:border-main focus:outline-none">
-                <% anime.episodeRanges.forEach(range => { %>
-                  <option value="<%= range.start %>-<%= range.end %>"><%= range.label %></option>
-                <% }); %>
-              </select>
+              <button class="btn btn-sm btn-soft" id="episodeRangeBtn" style="min-width: 120px;">
+                <span class="text-subs" id="currentRange">1 - 50</span>
+                <span class="ic-chevron-down text-subs text-lg" aria-hidden="true"></span>
+              </button>
             <% } %>
             
-            <div class="flex items-center gap-2">
-              <input type="text" id="episodeSearch" placeholder="Buscar episodio..." class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text placeholder-subs focus:border-main focus:outline-none">
-            </div>
+            <button type="button" class="btn btn-sm btn-soft tooltip-top p-0" aria-label="Buscar" id="searchBtn">
+              <span class="ic-search-md text-lg" aria-hidden="true"></span>
+            </button>
+            <input type="text" id="episodeSearch" placeholder="Buscar episodio..." class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text placeholder-subs focus:border-main focus:outline-none hidden" style="width: 150px;">
             
-            <select id="episodeSort" class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text focus:border-main focus:outline-none">
-              <option value="asc">Episodio 1 → <%= anime.totalEpisodes %></option>
-              <option value="desc">Episodio <%= anime.totalEpisodes %> → 1</option>
-            </select>
-            
-            <button class="inline-flex items-center gap-2 px-3 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors text-sm" id="selectAllBtn">
-              <i class="fas fa-check-square"></i>
-              <span>Seleccionar Todo</span>
+            <button class="btn btn-sm btn-soft tooltip-top p-0" aria-label="Ordenar" type="button">
+              <span class="ic-arrows-up-down text-lg"></span>
             </button>
           </div>
         </div>
 
         <% if (anime.episodes && anime.episodes.length > 0) { %>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="episodesContainer">
-            <% anime.episodes.forEach((episode, index) => { %>
-              <article class="group/item relative bg-soft border border-line rounded-lg overflow-hidden hover:border-main hover:-translate-y-1 transition-all" data-episode="<%= episode.number %>">
-                <div class="absolute top-3 left-3 z-10">
-                  <input type="checkbox" id="ep-<%= episode.number %>" value="<%= episode.link %>" class="w-5 h-5 bg-mute border-2 border-line rounded cursor-pointer checked:bg-main checked:border-main focus:outline-none focus:ring-2 focus:ring-main/20">
-                </div>
-                
-                <div class="relative h-40 overflow-hidden">
-                  <% if (episode.screenshot) { %>
-                    <img class="w-full h-full object-cover transition-transform group-hover/item:scale-105" src="<%= episode.screenshot %>" alt="<%= episode.title %>" loading="lazy">
-                  <% } else { %>
-                    <div class="w-full h-full bg-line flex items-center justify-center">
+          <div class="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 xl:gap-6" id="episodesContainer">
+            <% 
+              // Mostrar solo los primeros 50 episodios por defecto
+              const episodesToShow = anime.episodes.slice(0, 50);
+              episodesToShow.forEach((episode, index) => { 
+            %>
+              <article class="group/item text-body relative" data-episode="<%= episode.number %>">
+                <div class="relative bg-current">
+                  <figure class="dark rounded-lg bg-black">
+                    <% 
+                      // Usar el ID numérico del anime para las screenshots
+                      const screenshotUrl = anime.animeId ? `https://cdn.animeav1.com/screenshots/${anime.animeId}/${episode.number}.jpg` : null;
+                    %>
+                    <img class="aspect-video w-full rounded-lg object-cover transition-all group-hover/item:opacity-50" 
+                         width="300" height="169" loading="lazy" 
+                         src="<%= screenshotUrl %>" 
+                         alt="backdrop"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <div class="aspect-video w-full rounded-lg bg-line flex items-center justify-center" style="display:none">
                       <i class="fas fa-film text-2xl text-subs"></i>
                     </div>
-                  <% } %>
+                  </figure>
                   
-                  <div class="absolute bottom-3 right-3">
-                    <span class="bg-main text-fore px-2 py-1 rounded-full text-xs font-bold">
-                      Ep. <%= episode.number %>
-                    </span>
+                  <div class="rnd-bse rnd-ase rnd-sm absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-current pe-1 pt-1 before:bottom-full before:start-0 after:bottom-0 after:start-full sm:pe-2 sm:pt-2">
+                    <div class="bg-line text-subs rounded px-2 py-1 text-xs font-bold">
+                      Episodio <span class="text-lead font-bold"><%= episode.number %></span>
+                    </div>
                   </div>
+                  
+                  <span class="ic-play ic-before bg-main/80 text-fore ring-main/40 absolute inset-0 m-auto grid h-12 w-12 scale-0 transform-gpu place-content-center rounded-full ps-0.5 opacity-0 ring-4 transition-all group-hover/item:scale-100 group-hover/item:opacity-100" aria-hidden="true"></span>
                 </div>
                 
-                <div class="p-4">
-                  <h3 class="text-sm font-semibold text-lead mb-2 line-clamp-2"><%= episode.title %></h3>
-                  <div class="flex items-center gap-3 text-xs text-subs mb-3">
-                    <span class="flex items-center gap-1">
-                      <i class="fas fa-clock"></i>
-                      <span>~24 min</span>
-                    </span>
-                  </div>
-                  
-                  <div class="flex gap-2">
-                    <button class="inline-flex items-center justify-center gap-2 px-3 py-2 bg-main text-fore font-medium rounded-lg hover:opacity-90 transition-opacity flex-1 text-sm download-episode" data-link="<%= episode.link %>" data-title="<%= episode.title %>">
-                      <i class="fas fa-download"></i>
-                      <span>Descargar</span>
-                    </button>
-                  </div>
-                </div>
+                <a class="absolute inset-0 grid place-content-center download-episode" 
+                   data-link="<%= episode.link %>" 
+                   data-title="<%= episode.title %>" 
+                   href="#">
+                  <span class="sr-only">Ver <%= anime.title %> <%= episode.number %></span>
+                </a>
               </article>
             <% }); %>
           </div>
@@ -305,6 +294,7 @@
     window.animeData = {
       title: '<%= anime.title %>',
       slug: '<%= anime.slug %>',
+      animeId: '<%= anime.animeId || '' %>',
       totalEpisodes: <%= anime.totalEpisodes %>,
       episodes: <%- JSON.stringify(anime.episodes) %>
     };

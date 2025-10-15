@@ -3,7 +3,7 @@ const express = require('express');
 const app = express();
 const path = require('path');
 
-const { getRecentAnimes, searchAnimes, getAnimeDetails } = require('./utils/animeScraper');
+const { getRecentAnimes, searchAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters } = require('./utils/animeScraper');
 const JDownloaderManager = require('./utils/jdownloader');
 const { performRequest } = require('./utils/requestHandler');
 const { getEpisodeDownloadLinks } = require('./utils/episodeParser');
@@ -42,43 +42,146 @@ app.get('/horario', (req, res) => {
   res.redirect('https://animeav1.com/horario');
 });
 
-// Redirigir catálogo a animeav1.com
-app.get('/catalogo', (req, res) => {
-  res.redirect('https://animeav1.com/catalogo');
-});
 
-app.get('/search', async (req, res) => {
+
+// API endpoint para obtener filtros
+app.get('/api/filters', async (req, res) => {
   try {
-    const query = req.query.q;
-    let searchResults = [];
-    
-    if (query) {
-      console.log(`[INFO] Searching animes with query: ${query}`);
-      searchResults = await searchAnimes(query);
-    }
-    
-    res.render('search', { 
-      searchResults, 
-      query: query || '',
-      hasSearched: !!query
-    });
+    const filters = await getAvailableFilters();
+    res.json({ success: true, filters });
   } catch (error) {
-    console.error('[ERROR] Search request failed:', error.message);
-    res.status(500).send('Error interno del servidor');
+    console.error('[ERROR] Failed to get filters:', error.message);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 });
 
-// API endpoint para búsqueda AJAX
+
+
+// Helper function for pagination URLs
+function buildPaginationUrl(page, query) {
+  const params = new URLSearchParams();
+  
+  // Add all current query parameters except page
+  Object.keys(query).forEach(key => {
+    if (key !== 'page' && query[key]) {
+      params.set(key, query[key]);
+    }
+  });
+  
+  // Add the new page
+  params.set('page', page);
+  
+  return '?' + params.toString();
+}
+
+app.get('/search', async (req, res) => {
+  try {
+    const {
+      q: query = '',
+      page = 1,
+      category = '',
+      genre = '',
+      year = '',
+      minYear = '',
+      maxYear = '',
+      status = '',
+      letter = '',
+      order = 'default'
+    } = req.query;
+    
+    console.log('[INFO] Loading search/catalog with filters:', req.query);
+    
+    // Obtener filtros disponibles
+    const filters = await getAvailableFilters();
+    
+    // Realizar búsqueda con filtros
+    const searchOptions = {
+      query,
+      page: parseInt(page),
+      category,
+      genre,
+      year: year || (minYear && maxYear ? `${minYear}-${maxYear}` : ''),
+      minYear,
+      maxYear,
+      status,
+      letter,
+      order
+    };
+    
+    const searchData = await searchAnimesWithFilters(searchOptions);
+    
+    res.render('search', {
+      animes: searchData.results,
+      pagination: searchData.pagination,
+      totalResults: searchData.pagination ? searchData.pagination.totalRecords : 0,
+      filters,
+      currentCategory: category,
+      currentGenre: genre,
+      currentYear: year,
+      currentMinYear: minYear,
+      currentMaxYear: maxYear,
+      currentStatus: status,
+      currentLetter: letter,
+      currentOrder: order,
+      query: query || '',
+      req,
+      buildPaginationUrl
+    });
+  } catch (error) {
+    console.error('[ERROR] Search request failed:', error.message);
+    res.render('search', {
+      animes: [],
+      pagination: null,
+      totalResults: 0,
+      filters: { categories: [], genres: [], years: [1990, new Date().getFullYear()] },
+      currentCategory: '',
+      currentGenre: '',
+      currentYear: '',
+      currentMinYear: '',
+      currentMaxYear: '',
+      currentStatus: '',
+      currentLetter: '',
+      currentOrder: 'default',
+      query: '',
+      req,
+      buildPaginationUrl,
+      error: 'Error al cargar el catálogo'
+    });
+  }
+});
+
+// API endpoint para búsqueda AJAX con filtros
 app.get('/api/search', async (req, res) => {
   try {
-    const query = req.query.q;
+    const {
+      q: query = '',
+      page = 1,
+      category = '',
+      genre = '',
+      year = '',
+      status = '',
+      letter = '',
+      order = 'default'
+    } = req.query;
     
-    if (!query) {
-      return res.json({ success: false, message: 'Query requerido' });
-    }
+    const searchOptions = {
+      query,
+      page: parseInt(page),
+      category,
+      genre,
+      year,
+      status,
+      letter,
+      order
+    };
     
-    const searchResults = await searchAnimes(query);
-    res.json({ success: true, results: searchResults });
+    const searchData = await searchAnimesWithFilters(searchOptions);
+    res.json({ 
+      success: true, 
+      results: searchData.results,
+      pagination: searchData.pagination,
+      appliedFilters: searchData.appliedFilters
+    });
   } catch (error) {
     console.error('[ERROR] API search failed:', error.message);
     res.status(500).json({ success: false, message: 'Error interno del servidor' });
@@ -220,7 +323,7 @@ const server = app.listen(3000, () => {
 server.on('error', (error) => {
   console.error('[ERROR] Server error:', error.message);
   if (error.code === 'EADDRINUSE') {
-    console.error('[ERROR] Port 3000 is already in use');
+    console.error('[ERROR] Port 8000 is already in use');
     process.exit(1);
   }
 });
