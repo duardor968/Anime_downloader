@@ -1,4 +1,27 @@
 // server.js
+// Procesar argumentos para proxy personalizado
+const args = process.argv.slice(2);
+if (args.includes('-p')) {
+  const proxyIndex = args.indexOf('-p');
+  if (proxyIndex + 1 < args.length) {
+    const customProxy = args[proxyIndex + 1];
+    process.env.HTTP_PROXY = customProxy;
+    process.env.HTTPS_PROXY = customProxy;
+    process.env.http_proxy = customProxy;
+    process.env.https_proxy = customProxy;
+    console.log(`[INFO] Using custom proxy: ${customProxy}`);
+  }
+} else {
+  // Detectar proxy del sistema automáticamente
+  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
+  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  if (httpProxy || httpsProxy) {
+    console.log(`[INFO] Using system proxy - HTTP: ${httpProxy || 'none'}, HTTPS: ${httpsProxy || 'none'}`);
+  } else {
+    console.log('[INFO] No proxy detected - running without proxy');
+  }
+}
+
 const express = require('express');
 const app = express();
 const path = require('path');

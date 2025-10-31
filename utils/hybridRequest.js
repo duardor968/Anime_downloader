@@ -5,50 +5,31 @@ const { getSystemProxy } = require('./proxyConfig');
 
 // Función para hacer request con curl como fallback
 async function makeRequest(url, options = {}) {
-  const proxyConfig = getSystemProxy();
-  
-  // Primero intentar con axios nativo
+  // Primero intentar con axios SIN proxy (siempre falla pero es rápido)
   try {
     const axiosConfig = {
-      timeout: options.timeout || 30000,
+      timeout: options.timeout || 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         ...options.headers
       }
+      // Sin configuración de proxy - axios siempre sin proxy
     };
 
-    // Configurar proxy si está disponible
-    if (proxyConfig.http || proxyConfig.https) {
-      const proxyUrl = proxyConfig.https || proxyConfig.http;
-      const url_obj = new URL(proxyUrl);
-      
-      axiosConfig.proxy = {
-        protocol: url_obj.protocol.replace(':', ''),
-        host: url_obj.hostname,
-        port: parseInt(url_obj.port) || 8080
-      };
-    }
-
     const response = await axios.get(url, axiosConfig);
-    
-    // Si la respuesta es exitosa, devolverla
     if (response.status === 200) {
       return response;
     }
-    
-    // Si no es exitosa, intentar con curl
     throw new Error(`HTTP ${response.status}`);
     
   } catch (axiosError) {
-    console.log(`[WARN] Axios request failed (${axiosError.message}), trying curl fallback`);
+    console.log(`[WARN] Axios request failed, trying curl fallback`);
     
-    // Fallback a curl
+    // Fallback a curl CON proxy automático
     try {
       return await makeRequestWithCurl(url, options);
     } catch (curlError) {
-      console.error(`[ERROR] Both axios and curl failed for ${url}:`);
-      console.error(`[ERROR] Axios: ${axiosError.message}`);
-      console.error(`[ERROR] Curl: ${curlError.message}`);
+      console.error(`[ERROR] Network request failed: ${curlError.message}`);
       throw new Error(`Network request failed: ${curlError.message}`);
     }
   }
@@ -58,7 +39,7 @@ async function makeRequest(url, options = {}) {
 function makeRequestWithCurl(url, options = {}) {
   return new Promise((resolve, reject) => {
     const proxyConfig = getSystemProxy();
-    const args = ['-s', '-L']; // -s silencioso, -L seguir redirects
+    const args = ['-s', '-L', '--connect-timeout', '10', '--max-time', '30']; // Timeouts más específicos
     
     // Agregar proxy si está configurado
     if (proxyConfig.http || proxyConfig.https) {
@@ -78,7 +59,11 @@ function makeRequestWithCurl(url, options = {}) {
     // Agregar URL
     args.push(url);
     
-    const curl = spawn('curl', args);
+    const curl = spawn('curl', args, { 
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true 
+    });
+    
     let data = '';
     let error = '';
     
@@ -91,7 +76,7 @@ function makeRequestWithCurl(url, options = {}) {
     });
     
     curl.on('close', (code) => {
-      if (code === 0) {
+      if (code === 0 && data.length > 0) {
         // Simular respuesta de axios
         resolve({
           status: 200,
@@ -99,13 +84,20 @@ function makeRequestWithCurl(url, options = {}) {
           headers: { 'content-type': 'text/html' }
         });
       } else {
-        reject(new Error(`curl failed with code ${code}: ${error}`));
+        const errorMsg = error.trim() || `curl failed with code ${code}`;
+        reject(new Error(errorMsg));
       }
     });
     
     curl.on('error', (err) => {
       reject(new Error(`curl spawn error: ${err.message}`));
     });
+    
+    // Timeout de seguridad
+    setTimeout(() => {
+      curl.kill('SIGTERM');
+      reject(new Error('curl timeout after 35 seconds'));
+    }, 35000);
   });
 }
 

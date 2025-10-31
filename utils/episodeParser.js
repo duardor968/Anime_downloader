@@ -8,28 +8,44 @@ async function getEpisodeDownloadLinks(episodePath) {
 
   const { data } = await makeRequest(url);
 
-  // Buscar la sección downloads y luego SUB dentro de ella
+  // Buscar la sección downloads
   const downloadsMatch = data.match(/downloads:\{([\s\S]*?)\}\}/);
   if (!downloadsMatch) return [];
   
   const downloadsSection = downloadsMatch[1];
-  const subMatch = downloadsSection.match(/SUB:\[([\s\S]*?)\]/);
-  if (!subMatch) return [];
   
-  const subDownloadsText = subMatch[1];
+  // Intentar SUB primero
+  let downloadText = null;
+  let audioType = 'SUB';
+  
+  const subMatch = downloadsSection.match(/SUB:\[([\s\S]*?)\]/);
+  if (subMatch && subMatch[1].trim()) {
+    downloadText = subMatch[1];
+  } else {
+    // Si no hay SUB o está vacío, intentar DUB
+    const dubMatch = downloadsSection.match(/DUB:\[([\s\S]*?)\]/);
+    if (dubMatch && dubMatch[1].trim()) {
+      downloadText = dubMatch[1];
+      audioType = 'DUB';
+    }
+  }
+  
+  if (!downloadText) return [];
+  
+  console.log(`[INFO] Found ${audioType} downloads for episode`);
 
   const links = [];
 
   // Buscar enlaces de Mega
-  const megaMatch = subDownloadsText.match(/\{server:"Mega",url:"([^"]+)"\}/);
+  const megaMatch = downloadText.match(/\{server:"Mega",url:"([^"]+)"\}/);
   if (megaMatch) links.push(megaMatch[1]);
 
   // Buscar enlaces de MP4Upload
-  const mp4Match = subDownloadsText.match(/\{server:"MP4Upload",url:"([^"]+)"\}/);
+  const mp4Match = downloadText.match(/\{server:"MP4Upload",url:"([^"]+)"\}/);
   if (mp4Match) links.push(mp4Match[1]);
 
   // Buscar enlaces de PDrain (Pixeldrain)
-  const pdrainMatch = subDownloadsText.match(/\{server:"PDrain",url:"([^"]+)"\}/);
+  const pdrainMatch = downloadText.match(/\{server:"PDrain",url:"([^"]+)"\}/);
   if (pdrainMatch) links.push(pdrainMatch[1]);
 
   return [...new Set(links)];
