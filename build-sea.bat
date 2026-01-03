@@ -48,7 +48,8 @@ if exist "public\\images\\favicon.ico" (
     --file-version "%APP_VERSION%.0" ^
     --product-version "%APP_VERSION%.0" ^
     --product-name "AnimeHub" ^
-    --file-description "Anime downloader"
+    --file-description "Anime downloader" ^
+    --legal-copyright "Copyright (c) 2026 Ernesto Duardo Rodríguez"
   if errorlevel 1 (
     echo [WARN] resedit-cli falló al inyectar icono/metadata.
   )
