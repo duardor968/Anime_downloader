@@ -40,19 +40,44 @@ echo [6/7] Injecting SEA blob into executable...
 call npx --yes postject "release\\AnimeHub-v%APP_VERSION%-windows.exe" NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
 
 if exist "public\\images\\favicon.ico" (
-  echo [6b/7] Embedding icon and metadata...
+  echo [6b/7] Embedding icon and metadata via JSON definition...
+  
+  set TEMP_DEF=%CD%\temp-version-definition.json
+
+  (
+    echo {
+    echo   "lang": 1033,
+    echo   "icons": [
+    echo     {
+    echo       "id": 1,
+    echo       "sourceFile": "public\\images\\favicon.ico"
+    echo     }
+    echo   ],
+    echo   "version": {
+    echo     "FileVersion": "%APP_VERSION%.0",
+    echo     "ProductVersion": "%APP_VERSION%.0",
+    echo     "FileDescription": "Anime downloader",
+    echo     "ProductName": "AnimeHub",
+    echo     "LegalCopyright": "Copyright (c) 2026 Ernesto Duardo Rodriguez",
+    echo     "OriginalFilename": "AnimeHub-v%APP_VERSION%-windows.exe",
+    echo     "InternalName": "AnimeHub"
+    echo   }
+    echo }
+  ) > "!TEMP_DEF!"
+
   call npx --yes resedit-cli --ignore-signed ^
-    --in "release\\AnimeHub-v%APP_VERSION%-windows.exe" ^
-    --out "release\\AnimeHub-v%APP_VERSION%-windows.exe" ^
-    --icon 1,"public\\images\\favicon.ico" ^
-    --file-version "%APP_VERSION%.0" ^
-    --product-version "%APP_VERSION%.0" ^
-    --product-name "AnimeHub" ^
-    --file-description "Anime downloader" ^
-    --legal-copyright "Copyright (c) 2026 Ernesto Duardo Rodríguez"
+    "release\AnimeHub-v%APP_VERSION%-windows.exe" ^
+    "release\AnimeHub-v%APP_VERSION%-windows.exe" ^
+    --definition "!TEMP_DEF!"
+
   if errorlevel 1 (
-    echo [WARN] resedit-cli falló al inyectar icono/metadata.
+    echo [ERROR] resedit-cli fallo al inyectar recursos desde la definicion.
+    if exist "!TEMP_DEF!" del "!TEMP_DEF!"
+    exit /b 1
   )
+
+  if exist "!TEMP_DEF!" del "!TEMP_DEF!"
+
 )
 
 echo [7/7] Cleaning temporary files...
