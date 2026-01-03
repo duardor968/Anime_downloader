@@ -22,9 +22,17 @@ if (args.includes('-p')) {
   }
 }
 
+// Silenciar warning deprecation de url.parse de dependencias (DEP0169)
+process.on('warning', (warning) => {
+  if (warning && warning.code === 'DEP0169') return;
+  console.warn(warning.stack || warning.message);
+});
+
 const express = require('express');
 const app = express();
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 const { getRecentAnimes, searchAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters } = require('./utils/animeScraper');
 const JDownloaderManager = require('./utils/jdownloader');
@@ -32,7 +40,32 @@ const { performRequest } = require('./utils/requestHandler');
 const { getEpisodeDownloadLinks } = require('./utils/episodeParser');
 const cheerio = require('cheerio');
 
-// Configuración del usuario
+// Detect SEA runtime and prepare embedded assets when available
+let assetRoot = __dirname;
+try {
+  const sea = require('node:sea');
+  const manifestJson = sea.getAsset('sea-assets-manifest.json', 'utf8');
+  const manifest = JSON.parse(manifestJson);
+  const extractionRoot = path.join(os.tmpdir(), 'animehub-sea-assets');
+  if (fs.existsSync(extractionRoot)) {
+    fs.rmSync(extractionRoot, { recursive: true, force: true });
+  }
+  for (const rel of manifest.files || []) {
+    const destPath = path.join(extractionRoot, rel);
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    const raw = sea.getAsset(rel);
+    const buffer = Buffer.isBuffer(raw)
+      ? raw
+      : Buffer.from(raw instanceof ArrayBuffer ? new Uint8Array(raw) : raw);
+    fs.writeFileSync(destPath, buffer);
+  }
+  assetRoot = extractionRoot;
+  console.log('[INFO] SEA runtime detected - assets extracted to', extractionRoot);
+} catch (err) {
+  // Not running as SEA or assets unavailable; fall back to filesystem.
+}
+
+// Configuraci?n del usuario
 let userConfig = {
   jdownloader: {
     username: '',
@@ -41,12 +74,15 @@ let userConfig = {
   batchSize: 5
 };
 
-// Configuración básica
-app.use(express.static(path.join(__dirname, 'public')));
+// Configuraci?n b?sica
+const staticDir = path.join(assetRoot, 'public');
+const viewsDir = path.join(assetRoot, 'views');
+
+app.use(express.static(staticDir));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', viewsDir);
 
 app.get('/', async (req, res) => {
   try {
@@ -332,11 +368,11 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-console.log('[INFO] AnimeHub v1.2.0 - Starting server...');
+console.log('[INFO] AnimeHub v1.2.3 - Starting server...');
 console.log('[INFO] Working directory:', __dirname);
-console.log('[INFO] Static files from:', path.join(__dirname, 'public'));
+console.log('[INFO] Static files from:', staticDir);
 console.log('[INFO] View engine: EJS');
-console.log('[INFO] Views directory:', path.join(__dirname, 'views'));
+console.log('[INFO] Views directory:', viewsDir);
 
 const server = app.listen(3000, () => {
   console.log('[INFO] Server running on http://localhost:3000');
@@ -346,7 +382,7 @@ const server = app.listen(3000, () => {
 server.on('error', (error) => {
   console.error('[ERROR] Server error:', error.message);
   if (error.code === 'EADDRINUSE') {
-    console.error('[ERROR] Port 8000 is already in use');
+    console.error('[ERROR] Port 3000 is already in use');
     process.exit(1);
   }
 });

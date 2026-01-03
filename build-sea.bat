@@ -1,43 +1,59 @@
 @echo off
-echo ========================================
-echo  AnimeHub - SEA Build Script v1.2.2
-echo ========================================
-echo.
+setlocal enabledelayedexpansion
+REM AnimeHub SEA build script (Windows)
+REM - Reads version from package.json
+REM - Bundles with ncc
+REM - Generates SEA blob and injects into node.exe
+REM - Embeds icon/metadata via rcedit when available
 
-echo [1/7] Creating release directory...
-if not exist release mkdir release
+REM Resolve project root
+pushd %~dp0
 
-echo [2/7] Bundling application with ncc...
-echo. | npx @vercel/ncc build server.js -o dist --quiet
+for /f "usebackq" %%v in (`node -p "require('./package.json').version"`) do set APP_VERSION=%%v
+echo === AnimeHub SEA build - version %APP_VERSION% ===
 
-echo [3/7] Generating SEA blob...
-node --experimental-sea-config sea-config.json
+echo [1/7] Cleaning output folders...
+if exist dist rmdir /S /Q dist
+if exist release rmdir /S /Q release
+if exist sea-prep.blob del /f /q sea-prep.blob
+mkdir release
 
-echo [4/7] Copying Node.js executable...
-copy /Y "%NODE_HOME%\node.exe" "release\AnimeHub-v1.2.2-windows.exe" >nul
-if not exist "release\AnimeHub-v1.2.2-windows.exe" (
-    echo Warning: NODE_HOME not set, trying default path...
-    copy /Y "C:\Program Files\nodejs\node.exe" "release\AnimeHub-v1.2.2-windows.exe" >nul
+echo [2/7] Generating asset manifest...
+call npm run --silent generate:assets
+
+echo [3/7] Bundling with ncc...
+call npx --yes @vercel/ncc build server.js -o dist --quiet
+
+echo [4/7] Generating SEA blob...
+node scripts/build-sea-config.js
+node --experimental-sea-config sea-config.generated.json
+
+echo [5/7] Locating node.exe...
+if not defined NODE_EXE for /f "usebackq tokens=*" %%p in (`node -p "process.execPath"`) do set "NODE_EXE=%%p"
+if not exist "%NODE_EXE%" (
+  echo node.exe no encontrado. Define NODE_EXE o instala Node.js.
+  exit /b 1
+)
+copy /Y "%NODE_EXE%" "release\\AnimeHub-v%APP_VERSION%-windows.exe" >nul
+
+echo [6/7] Injecting SEA blob into executable...
+call npx --yes postject "release\\AnimeHub-v%APP_VERSION%-windows.exe" NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
+
+if exist "public\\images\\favicon.ico" (
+  echo [6b/7] Embedding icon and metadata...
+  set "RCEDIT="
+  if exist "%~dp0node_modules\\.bin\\rcedit.cmd" set "RCEDIT=%~dp0node_modules\\.bin\\rcedit.cmd"
+  if not defined RCEDIT for /f "usebackq delims=" %%r in (`"%SystemRoot%\\System32\\where.exe" rcedit.exe 2^>nul`) do if not defined RCEDIT set "RCEDIT=%%r"
+  if not defined RCEDIT for /f "usebackq delims=" %%r in (`"%SystemRoot%\\System32\\where.exe" rcedit.cmd 2^>nul`) do if not defined RCEDIT set "RCEDIT=%%r"
+  if not defined RCEDIT set "RCEDIT=rcedit"
+  echo [INFO] Using rcedit: !RCEDIT!
+  REM call "!RCEDIT!" "release\\AnimeHub-v%APP_VERSION%-windows.exe" --set-icon "public\\images\\favicon.ico" --set-file-version %APP_VERSION% --set-product-version %APP_VERSION% --set-version-string "ProductName" "AnimeHub" --set-version-string "FileDescription" "Anime downloader"
 )
 
-echo [5/7] Injecting SEA blob into executable...
-echo. | npx postject release\AnimeHub-v1.2.2-windows.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
+echo [7/7] Cleaning temporary files...
+if exist sea-prep.blob del /f /q sea-prep.blob
+if exist sea-config.generated.json del /f /q sea-config.generated.json
 
-echo [6/7] Copying resources...
-xcopy /E /I /Y views release\views >nul
-xcopy /E /I /Y public release\public >nul
-
-echo [7/7] Copying bundled assets...
-for /d %%i in (dist\*) do xcopy /E /I /Y "%%i" "release\%%~ni" >nul 2>&1
-for %%i in (dist\*) do if not "%%~ni"=="index" xcopy /Y "%%i" "release\" >nul 2>&1
-
-echo.
-echo Cleaning up temporary files...
-if exist sea-prep.blob del sea-prep.blob >nul 2>&1
-if exist dist rmdir /S /Q dist >nul 2>&1
-
-echo.
-echo SEA Build completed successfully!
-echo Executable: release\AnimeHub-v1.2.2-windows.exe
-echo.
-pause
+echo Done. Executable: release\\AnimeHub-v%APP_VERSION%-windows.exe
+popd
+endlocal

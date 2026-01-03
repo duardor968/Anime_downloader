@@ -1,21 +1,53 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Estilos personalizados para mantener el diseño exacto */
+/* Rutas a escanear para generación de utilidades */
+@source "./views/**/*.{ejs,html}" "./public/**/*.js" "./src/**/*.js";
+
+/* Tema portado desde la antigua configuración */
+@theme {
+  --color-body: rgb(19, 19, 23);
+  --color-text: rgb(135, 138, 168);
+  --color-lead: rgb(255, 255, 255);
+  --color-subs: rgb(167, 172, 209);
+  --color-fore: rgb(0, 0, 0);
+  --color-main: rgb(60, 236, 214);
+  --color-tone: rgb(192, 132, 252);
+  --color-mark: rgb(251, 146, 60);
+  --color-mute: rgb(26, 27, 37);
+  --color-soft: rgb(33, 36, 51);
+  --color-line: rgb(48, 52, 74);
+  --color-edge: rgb(64, 69, 98);
+  --color-fire: rgb(248, 113, 113);
+  --color-warn: rgb(216, 195, 111);
+  --color-wins: rgb(74, 222, 128);
+  --color-info: rgb(96, 165, 250);
+  --color-back: rgb(26, 27, 37);
+
+  --font-satoshi: "Satoshi", "sans-serif";
+  --font-sans: "Satoshi", "Inter", "ui-sans-serif", "system-ui", "sans-serif";
+
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+/* Estilos base */
 @layer base {
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    font-family: 'Satoshi', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
     line-height: 1.5;
     overflow-x: hidden;
     font-size: 14px;
   }
 }
 
+/* Componentes y utilidades personalizadas */
 @layer components {
   .container {
     max-width: 1400px;
@@ -28,7 +60,7 @@
   }
 
   .btn-primary {
-    background: linear-gradient(to right, rgb(var(--main)), rgb(var(--info)));
+    background: linear-gradient(to right, rgb(var(--color-main)), rgb(var(--color-info)));
     @apply text-fore border-transparent hover:shadow-lg hover:-translate-y-0.5;
   }
 
@@ -59,15 +91,33 @@
   }
 
   .aspect-poster {
-    aspect-ratio: 1/1.5;
+    aspect-ratio: 1 / 1.5;
   }
 
   .aspect-video {
-    aspect-ratio: 16/9;
+    aspect-ratio: 16 / 9;
   }
 }
 
 @layer utilities {
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(100%); }
+    100% { opacity: 1; transform: translateZ(0); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s both;
+  }
+
+  .animate-fadeUp {
+    animation: fadeUp 0.2s both;
+  }
+
   .bg-cut-l {
     mask: linear-gradient(to left, rgb(19, 19, 23), transparent);
     -webkit-mask: linear-gradient(to left, rgb(19, 19, 23), transparent);
@@ -82,6 +132,4 @@
     mask: linear-gradient(to top, transparent, rgb(19, 19, 23) 50%, transparent);
     -webkit-mask: linear-gradient(to top, transparent, rgb(19, 19, 23) 50%, transparent);
   }
-
-
 }

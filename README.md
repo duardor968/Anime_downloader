@@ -39,17 +39,17 @@ AnimeHub es una aplicación web moderna que permite buscar y explorar animes uti
 **Descarga directa sin necesidad de Node.js:**
 
 1. **Descargar desde [Releases](../../releases)**
-   - `AnimeHub-v1.2.2-windows.exe` (Windows)
-   - `AnimeHub-v1.2.2-linux` (Linux)
+   - `AnimeHub-v<versión>-windows.exe` (Windows)
+   - `AnimeHub-v<versión>-linux` (Linux)
 
 2. **Ejecutar directamente**
 ```bash
 # Windows
-.\AnimeHub-v1.2.2-windows.exe
+.\AnimeHub-v<versión>-windows.exe
 
 # Linux
-chmod +x AnimeHub-v1.2.2-linux
-./AnimeHub-v1.2.2-linux
+chmod +x AnimeHub-v<versión>-linux
+./AnimeHub-v<versión>-linux
 ```
 
 3. **Abrir en el navegador**
@@ -76,7 +76,7 @@ npm install
 
 3. **Compilar TailwindCSS**
 ```bash
-npx tailwindcss -i ./src/input.css -o ./public/tailwind.css --minify
+npx tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --minify
 ```
 
 4. **Iniciar el servidor**
@@ -170,27 +170,50 @@ Esto garantiza compatibilidad con:
 ### Scripts disponibles
 
 ```bash
-# Iniciar servidor de desarrollo
+# Desarrollo (nodemon + Tailwind en watch minificado)
+npm run dev
+
+# Solo servidor (sin watch de estilos)
 npm start
 
-# Compilar TailwindCSS
+# Compilar TailwindCSS (one-shot minificado)
 npm run build:css
-
-# Compilar TailwindCSS (producción)
-npm run build:css:prod
-
-# Ejecutar tests (si están configurados)
-npm test
 ```
 
-### Compilar binarios
+> TailwindCSS 4: la configuración vive en `src/input.css` usando `@import "tailwindcss";` y `@source` (no se usa `tailwind.config.js`). El CLI se sirve desde `@tailwindcss/cli` y se invoca con `tailwindcss` como en los comandos anteriores.
+
+### Automatización CI (GitHub Actions)
+
+El flujo `.github/workflows/build.yml` construye binarios para Windows y Linux al crear un tag `v*`. Pasos:
+- `npm ci`
+- `npm run generate:assets`
+- `tailwindcss` (si existe `src/input.css`)
+- `build-sea.bat` en Windows / `build-sea.sh` en Linux
+- Publica artefactos `animehub-<os>` con el contenido de `release/`
+
+### Compilar binarios (SEA auto‑contenidos)
+
+Los binarios ahora incrustan `public/`, `views/` y un manifiesto de assets dentro del ejecutable SEA. Solo necesitas el binario generado en `release/`.
+
+Requisitos: Node.js 20+, npm, y que `node` esté disponible en PATH (Windows necesita `node.exe` instalado).
 
 ```bash
-# Compilar ejecutable con Node.js SEA
+# Windows (PowerShell o CMD)
 ./build-sea.bat
 
-# Los archivos se generarán en la carpeta release/
+# Linux / WSL / macOS
+chmod +x build-sea.sh
+./build-sea.sh
 ```
+
+Los scripts:
+- leen la versión desde `package.json` para nombrar el binario (`AnimeHub-v<versión>-<os>`),
+- generan el manifiesto de assets (`npm run generate:assets`),
+- empaquetan con `@vercel/ncc`,
+- crean el blob SEA y lo inyectan en el binario de Node con `postject`,
+- (Windows) insertan icono/metadata con `rcedit` usando `public/images/favicon.ico`.
+
+El binario resultante queda en `release/` y no requiere carpetas auxiliares.
 
 ### Estructura de rutas
 

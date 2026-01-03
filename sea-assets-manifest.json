@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-01-03T16:46:06.744Z",
+  "files": [
+    "public/css/custom-theme.css",
+    "public/css/tailwind.css",
+    "public/images/favicon.ico",
+    "public/images/favicon.png",
+    "public/images/favicon.svg",
+    "public/images/logo.svg",
+    "public/js/anime.js",
+    "public/js/index.js",
+    "views/anime.ejs",
+    "views/error.ejs",
+    "views/index.ejs",
+    "views/partials/footer.ejs",
+    "views/partials/header.ejs",
+    "views/search.ejs"
+  ]
+}
