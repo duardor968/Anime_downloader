@@ -211,7 +211,7 @@ Los scripts:
 - generan el manifiesto de assets (`npm run generate:assets`),
 - empaquetan con `@vercel/ncc`,
 - crean el blob SEA y lo inyectan en el binario de Node con `postject`,
-- (Windows) insertan icono/metadata con `rcedit` usando `public/images/favicon.ico`.
+- (Windows) insertan icono/metadata con `resedit-cli` usando `public/images/favicon.ico`.
 
 El binario resultante queda en `release/` y no requiere carpetas auxiliares.
 

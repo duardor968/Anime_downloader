@@ -3,7 +3,6 @@
   "version": "1.2.3",
   "description": "Anime Downloader - AnimeHub",
   "main": "server.js",
-
   "scripts": {
     "start": "node server.js",
     "dev": "concurrently \"nodemon server.js\" \"tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --watch --minify\"",
@@ -23,7 +22,8 @@
     "ejs": "^3.1.10",
     "express": "^5.2.1",
     "http-proxy-agent": "^7.0.2",
-    "https-proxy-agent": "^7.0.6"
+    "https-proxy-agent": "^7.0.6",
+    "resedit-cli": "^3.0.1"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",
@@ -31,7 +31,6 @@
     "concurrently": "^9.2.1",
     "nodemon": "^3.1.11",
     "postject": "^1.0.0-alpha.6",
-    "rcedit": "^5.0.2",
     "tailwindcss": "^4.1.18"
   }
 }

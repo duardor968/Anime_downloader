@@ -41,13 +41,17 @@ call npx --yes postject "release\\AnimeHub-v%APP_VERSION%-windows.exe" NODE_SEA_
 
 if exist "public\\images\\favicon.ico" (
   echo [6b/7] Embedding icon and metadata...
-  set "RCEDIT="
-  if exist "%~dp0node_modules\\.bin\\rcedit.cmd" set "RCEDIT=%~dp0node_modules\\.bin\\rcedit.cmd"
-  if not defined RCEDIT for /f "usebackq delims=" %%r in (`"%SystemRoot%\\System32\\where.exe" rcedit.exe 2^>nul`) do if not defined RCEDIT set "RCEDIT=%%r"
-  if not defined RCEDIT for /f "usebackq delims=" %%r in (`"%SystemRoot%\\System32\\where.exe" rcedit.cmd 2^>nul`) do if not defined RCEDIT set "RCEDIT=%%r"
-  if not defined RCEDIT set "RCEDIT=rcedit"
-  echo [INFO] Using rcedit: !RCEDIT!
-  REM call "!RCEDIT!" "release\\AnimeHub-v%APP_VERSION%-windows.exe" --set-icon "public\\images\\favicon.ico" --set-file-version %APP_VERSION% --set-product-version %APP_VERSION% --set-version-string "ProductName" "AnimeHub" --set-version-string "FileDescription" "Anime downloader"
+  call npx --yes resedit-cli --ignore-signed ^
+    --in "release\\AnimeHub-v%APP_VERSION%-windows.exe" ^
+    --out "release\\AnimeHub-v%APP_VERSION%-windows.exe" ^
+    --icon 1,"public\\images\\favicon.ico" ^
+    --file-version "%APP_VERSION%.0" ^
+    --product-version "%APP_VERSION%.0" ^
+    --product-name "AnimeHub" ^
+    --file-description "Anime downloader"
+  if errorlevel 1 (
+    echo [WARN] resedit-cli falló al inyectar icono/metadata.
+  )
 )
 
 echo [7/7] Cleaning temporary files...
