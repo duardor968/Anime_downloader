@@ -1,6 +1,7 @@
 /.vs
 /node_modules
 /release
+package-lock.json
 
 # SEA build files
 sea-prep.blob
