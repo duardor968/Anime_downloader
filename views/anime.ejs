@@ -9,13 +9,12 @@
   <link rel="stylesheet" href="/css/tailwind.css">
   <link rel="stylesheet" href="/css/custom-theme.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-body text-text font-satoshi min-h-screen flex flex-col">
   <%- include('partials/header') %>
 
-  <main class="py-6">
+  <main class="py-10">
     <div class="container">
       <!-- Breadcrumb -->
       <div class="flex items-center gap-2 text-sm text-subs mb-6">
@@ -25,7 +24,7 @@
       </div>
       
       <!-- Anime Hero Section -->
-      <section class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start mb-12">
+      <section class="section-shell p-6 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 items-start mb-12">
         <div class="flex justify-center lg:justify-start">
           <% if (anime.poster) { %>
             <img class="w-full max-w-80 lg:w-full h-auto rounded-lg shadow-lg" src="<%= anime.poster %>" alt="<%= anime.title %>">

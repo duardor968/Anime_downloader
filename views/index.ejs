@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/tailwind.css">
   <link rel="stylesheet" href="/css/custom-theme.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-body text-text font-satoshi min-h-screen flex flex-col">
@@ -18,7 +18,8 @@
 
   <!-- Hero Carousel -->
   <% if (featuredAnimes && featuredAnimes.length> 0) { %>
-    <section class="relative mb-12 rounded-lg overflow-hidden shadow-2xl" style="height: 60vh; min-height: 400px;">
+    <section class="relative mb-12 rounded-2xl overflow-hidden shadow-2xl border border-line/70 bg-mute/80 backdrop-blur-xl"
+      style="height: 60vh; min-height: 400px;">
       <div class="relative w-full h-full">
         <div class="flex transform-gpu transition-transform duration-700 ease-in-out" id="carousel-slides">
           <% featuredAnimes.forEach((anime, index)=> { %>
@@ -115,10 +116,10 @@
     </section>
     <% } %>
 
-      <main class="py-6">
-        <div class="container">
+      <main class="py-10">
+        <div class="container space-y-6">
           <!-- Recent Episodes Section -->
-          <section class="grid items-start gap-4 py-3" id="recent-episodes">
+          <section class="section-shell p-6 grid items-start gap-6" id="recent-episodes">
             <header class="flex flex-wrap items-center justify-between gap-4">
               <div class="grid items-start gap-1">
                 <h2 class="text-2xl font-bold text-lead">Episodios</h2>
@@ -130,7 +131,7 @@
               <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
                 <% recentEpisodes.forEach((episode, index)=> { %>
                   <article
-                    class="group/item relative text-text bg-soft rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    class="group/item relative card-surface text-text overflow-hidden">
                     <div class="relative">
                       <figure class="bg-black">
                         <img class="aspect-video w-full object-cover transition-all group-hover/item:opacity-75"
@@ -186,7 +187,7 @@
           </section>
 
           <!-- Recent Animes Section -->
-          <section class="grid items-start gap-6 py-3">
+          <section class="section-shell p-6 grid items-start gap-6">
             <header class="flex flex-wrap items-center justify-between gap-4">
               <div class="grid items-start gap-1">
                 <h2 class="text-2xl font-bold text-lead">Animes</h2>
@@ -203,13 +204,13 @@
               <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 xl:gap-6">
                 <% recentAnimes.forEach((anime, index)=> { %>
                   <article class="group/item relative text-text">
-                    <div class="relative" style="background-color: rgb(var(--body));">
-                      <figure class="rounded-lg bg-black">
-                        <img class="aspect-poster w-full rounded-lg object-cover" src="<%= anime.poster %>"
+                    <div class="relative card-surface overflow-hidden">
+                      <figure class="rounded-2xl bg-black overflow-hidden">
+                        <img class="aspect-poster w-full object-cover" src="<%= anime.poster %>"
                           alt="Portada de <%= anime.title %>" onerror="this.src='/placeholder-anime.jpg'" />
                       </figure>
-                      <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg pe-2 pt-2" style="background-color: rgb(var(--body));">
-                        <div class="rounded bg-line px-2 py-1 text-xs font-bold text-subs">
+                      <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-soft/90 pe-2 pt-2">
+                        <div class="rounded-full bg-line/90 px-3 py-1 text-[11px] font-bold text-lead tracking-wide uppercase">
                           <%= anime.type || 'TV Anime' %>
                         </div>
                       </div>

@@ -1,25 +1,28 @@
 <header class="header">
-  <div class="container flex items-center justify-between py-4 lg:py-6">
-    <div class="flex items-center gap-6">
+  <div class="container flex flex-wrap items-center justify-between gap-4 py-4 lg:py-6">
+    <div class="flex items-center gap-4">
       <a href="/" class="flex items-center gap-3">
-        <img src="/images/logo.svg" alt="AnimeHub Logo" class="w-8 h-8">
-        <h1 class="text-lead font-bold text-xl">Anime<span class="text-main">Hub</span></h1>
+        <img src="/images/logo.svg" alt="AnimeHub Logo" class="w-10 h-10 rounded-xl shadow-md shadow-main/20">
+        <div>
+          <h1 class="text-lead font-bold text-xl leading-none">Anime<span class="text-main">Hub</span></h1>
+          <p class="text-[11px] uppercase tracking-[0.3em] text-subs">Descargas inteligentes</p>
+        </div>
       </a>
-
-      <form method="get" action="/search"
-        class="lg:flex items-center bg-soft border border-line rounded-lg px-4 py-2 w-72">
-        <i class="fas fa-search text-subs mr-3 cursor-pointer" id="search-icon"></i>
-        <input type="search" name="q" id="search-input" placeholder="Buscar anime..."
-          class="bg-transparent border-none outline-none text-text placeholder-subs flex-1">
-      </form>
     </div>
 
+    <form method="get" action="/search"
+      class="hidden lg:flex items-center gap-3 bg-soft/80 border border-line rounded-full px-5 py-2.5 shadow-lg shadow-black/30 backdrop-blur">
+      <i class="fas fa-search text-subs text-lg" id="search-icon"></i>
+      <input type="search" name="q" id="search-input" placeholder="Buscar anime..."
+        class="bg-transparent border-none outline-none text-lead placeholder-subs flex-1 text-sm">
+      <span class="pill bg-soft text-[11px] uppercase tracking-wide">Ctrl + K</span>
+    </form>
+
     <div class="flex items-center gap-2">
-      <button class="lg:hidden inline-flex items-center justify-center w-10 h-10 bg-soft border border-line rounded-lg text-subs hover:bg-main hover:text-fore hover:border-main transition-all duration-300" id="mobile-search-btn">
+      <button class="lg:hidden inline-flex items-center justify-center w-10 h-10 bg-soft/80 border border-line rounded-xl text-subs hover:bg-main hover:text-fore hover:border-main transition-all duration-300 shadow-md shadow-black/20" id="mobile-search-btn">
         <i class="fas fa-search text-lg"></i>
       </button>
-      <nav class="lg:flex items-center gap-3">
-
+      <nav class="lg:flex items-center gap-2">
         <a href="https://animeav1.com/horario" target="_blank" class="header-nav-btn">
           <i class="fas fa-calendar text-lg"></i>
           <span>Horario</span>
