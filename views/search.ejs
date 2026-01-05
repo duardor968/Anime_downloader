@@ -1,27 +1,18 @@
-<!DOCTYPE html>
-<html lang="es" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catálogo de Animes - AnimeHub</title>
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
-  <link rel="stylesheet" href="/css/tailwind.css">
-  <link rel="stylesheet" href="/css/custom-theme.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="bg-body text-text font-satoshi min-h-screen flex flex-col">
-  <%- include('partials/header') %>
+<%- include('partials/header', {
+  pageTitle: 'Catálogo de Animes - AnimeHub',
+  htmlClass: 'dark',
+  bodyClass: 'bg-body text-text font-body min-h-screen flex flex-col'
+}) %>
 
   <main class="py-6 flex-1">
     <div class="container">
       <!-- Search Hero Section -->
       <section class="section-shell text-center py-12 px-6 mb-8">
         <div class="max-w-2xl mx-auto">
-          <h1 class="text-4xl font-bold text-lead mb-4 flex items-center justify-center gap-3">
-            <i class="fas fa-search text-main"></i>
-            <span>Catálogo de Animes</span>
-          </h1>
+              <h1 class="text-4xl font-bold text-lead mb-4 flex items-center justify-center gap-3">
+                <i class="fas fa-search icon-gradient"></i>
+                <span>Catálogo de Animes</span>
+              </h1>
           <p class="text-lg text-subs mb-8">Explora y filtra nuestra colección completa</p>
 
           <div class="max-w-lg mx-auto">
@@ -35,8 +26,8 @@
                   placeholder="Buscar anime por nombre, género o año..."
                   autocomplete="off"
                 >
-                <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-subs hover:text-main transition-colors">
-                  <i class="fas fa-search text-lg"></i>
+                <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-subs transition-colors cursor-pointer icon-hover-gradient icon-btn">
+                  <i class="fas fa-search text-lg icon-gradient-hover"></i>
                 </button>
               </div>
             </form>
@@ -45,7 +36,7 @@
       </section>
 
       <!-- Filters Section -->
-      <section class="section-shell p-6 mb-8">
+      <section class="section-shell p-6 mb-8 overflow-visible filters-shell">
         <!-- Alphabetic Filter -->
         <div class="flex gap-2 flex-wrap justify-center mb-6">
           <button class="pill text-xs font-bold hover:border-main hover:text-lead hover:-translate-y-0.5 transition-all <%= currentLetter === '#' ? 'bg-main text-fore border-main' : '' %>"
@@ -59,23 +50,45 @@
 
         <!-- Advanced Filters -->
         <div class="flex flex-wrap gap-4 mb-6">
-          <select class="input-field w-44" id="categoryFilter">
-            <option value="">Tipo: Todos</option>
-            <% if (filters && filters.categories) { %>
-              <% filters.categories.forEach(category => { %>
-                <option value="<%= category.slug %>" <%= currentCategory === category.slug ? 'selected' : '' %>><%= category.name %></option>
-              <% }); %>
-            <% } %>
-          </select>
+          <div class="select-shell w-56 z-40" data-select>
+            <select class="select-field sr-only" id="categoryFilter">
+              <option value="">Tipo: Todos</option>
+              <% if (filters && filters.categories) { %>
+                <% filters.categories.forEach(category => { %>
+                  <option value="<%= category.slug %>" <%= currentCategory === category.slug ? 'selected' : '' %>><%= category.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+            <button type="button" class="select-button" data-select-trigger>Tipo: Todos</button>
+            <div class="select-menu hidden" data-select-menu>
+              <button class="select-option" type="button" data-value="">Tipo: Todos</button>
+              <% if (filters && filters.categories) { %>
+                <% filters.categories.forEach(category => { %>
+                  <button class="select-option" type="button" data-value="<%= category.slug %>"><%= category.name %></button>
+                <% }); %>
+              <% } %>
+            </div>
+          </div>
 
-          <select class="input-field w-44" id="genreFilter">
-            <option value="">Género: Todos</option>
-            <% if (filters && filters.genres) { %>
-              <% filters.genres.forEach(genre => { %>
-                <option value="<%= genre.slug %>" <%= currentGenre === genre.slug ? 'selected' : '' %>><%= genre.name %></option>
-              <% }); %>
-            <% } %>
-          </select>
+          <div class="select-shell w-56 z-40" data-select>
+            <select class="select-field sr-only" id="genreFilter">
+              <option value="">Género: Todos</option>
+              <% if (filters && filters.genres) { %>
+                <% filters.genres.forEach(genre => { %>
+                  <option value="<%= genre.slug %>" <%= currentGenre === genre.slug ? 'selected' : '' %>><%= genre.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+            <button type="button" class="select-button" data-select-trigger>Género: Todos</button>
+            <div class="select-menu hidden" data-select-menu>
+              <button class="select-option" type="button" data-value="">Género: Todos</button>
+              <% if (filters && filters.genres) { %>
+                <% filters.genres.forEach(genre => { %>
+                  <button class="select-option" type="button" data-value="<%= genre.slug %>"><%= genre.name %></button>
+                <% }); %>
+              <% } %>
+            </div>
+          </div>
 
           <div class="relative">
             <button type="button" id="yearDropdownBtn" class="input-field w-44 flex items-center justify-between">
@@ -99,25 +112,43 @@
             </div>
           </div>
 
-          <select class="input-field w-44" id="statusFilter">
-            <option value="">Estado: Todos</option>
-            <option value="completed" <%= currentStatus === 'completed' ? 'selected' : '' %>>Completado</option>
-            <option value="ongoing" <%= currentStatus === 'ongoing' ? 'selected' : '' %>>En emisión</option>
-            <option value="upcoming" <%= currentStatus === 'upcoming' ? 'selected' : '' %>>Próximamente</option>
-          </select>
+          <div class="select-shell w-56 z-40" data-select>
+            <select class="select-field sr-only" id="statusFilter">
+              <option value="">Estado: Todos</option>
+              <option value="completed" <%= currentStatus === 'completed' ? 'selected' : '' %>>Completado</option>
+              <option value="ongoing" <%= currentStatus === 'ongoing' ? 'selected' : '' %>>En emisión</option>
+              <option value="upcoming" <%= currentStatus === 'upcoming' ? 'selected' : '' %>>Próximamente</option>
+            </select>
+            <button type="button" class="select-button" data-select-trigger>Estado: Todos</button>
+            <div class="select-menu hidden" data-select-menu>
+              <button class="select-option" type="button" data-value="">Estado: Todos</button>
+              <button class="select-option" type="button" data-value="completed">Completado</button>
+              <button class="select-option" type="button" data-value="ongoing">En emisión</button>
+              <button class="select-option" type="button" data-value="upcoming">Próximamente</button>
+            </div>
+          </div>
         </div>
 
         <div class="flex flex-wrap items-center justify-between gap-4">
-          <button class="btn btn-primary" onclick="applyFilters()">
+          <button class="btn btn-primary cursor-pointer" onclick="applyFilters()">
             <i class="fas fa-filter mr-2"></i>Aplicar Filtros
           </button>
 
-          <select class="input-field w-44" id="sortFilter">
-            <option value="default" <%= currentOrder === 'default' ? 'selected' : '' %>>Ordenar: Predeterminado</option>
-            <option value="title" <%= currentOrder === 'title' ? 'selected' : '' %>>Título A-Z</option>
-            <option value="year" <%= currentOrder === 'year' ? 'selected' : '' %>>Año</option>
-            <option value="rating" <%= currentOrder === 'rating' ? 'selected' : '' %>>Puntuación</option>
-          </select>
+          <div class="select-shell w-64 z-40" data-select>
+            <select class="select-field sr-only" id="sortFilter">
+              <option value="default" <%= currentOrder === 'default' ? 'selected' : '' %>>Ordenar: Predeterminado</option>
+              <option value="title" <%= currentOrder === 'title' ? 'selected' : '' %>>Título A-Z</option>
+              <option value="year" <%= currentOrder === 'year' ? 'selected' : '' %>>Año</option>
+              <option value="rating" <%= currentOrder === 'rating' ? 'selected' : '' %>>Puntuación</option>
+            </select>
+            <button type="button" class="select-button" data-select-trigger>Ordenar: Predeterminado</button>
+            <div class="select-menu hidden" data-select-menu>
+              <button class="select-option" type="button" data-value="default">Ordenar: Predeterminado</button>
+              <button class="select-option" type="button" data-value="title">Título A-Z</button>
+              <button class="select-option" type="button" data-value="year">Año</button>
+              <button class="select-option" type="button" data-value="rating">Puntuación</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -157,31 +188,8 @@
           </div>
         <% } else { %>
           <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 xl:gap-6">
-            <% animes.forEach((anime, index) => { %>
-              <article class="group/item relative text-body">
-                <div class="relative card-surface overflow-hidden">
-                  <figure class="rounded-2xl bg-black overflow-hidden">
-                    <img class="aspect-poster w-full object-cover"
-                         src="<%= anime.poster %>"
-                         alt="Portada de <%= anime.title %>"
-                         loading="lazy" />
-                  </figure>
-                  <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-soft/90 pe-2 pt-2">
-                    <div class="rounded-full bg-line/90 px-3 py-1 text-[11px] font-bold text-lead tracking-wide uppercase">
-                      <%= anime.type || 'TV Anime' %>
-                    </div>
-                  </div>
-                </div>
-                <header class="grid items-start gap-1 p-2">
-                  <h3 class="line-clamp-2 text-sm font-bold text-lead">
-                    <%= anime.title %>
-                  </h3>
-                </header>
-                <a class="absolute inset-0 z-20 grid place-content-center" 
-                   href="/media/<%= anime.slug %>">
-                  <span class="sr-only">Ver <%= anime.title %></span>
-                </a>
-              </article>
+            <% animes.forEach((anime) => { %>
+              <%- include('partials/card-anime', { anime, variant: 'grid' }) %>
             <% }); %>
           </div>
         <% } %>
@@ -190,12 +198,12 @@
         <% if (pagination && pagination.totalPages > 1) { %>
           <div class="flex flex-wrap gap-2 justify-center mt-8">
             <% if (pagination.currentPage > 1) { %>
-              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs transition-colors hover-gradient" 
                  href="<%= buildPaginationUrl(pagination.currentPage - 1, req.query) %>">«</a>
             <% } %>
 
             <% if (pagination.currentPage > 3) { %>
-              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs transition-colors hover-gradient" 
                  href="<%= buildPaginationUrl(1, req.query) %>">1</a>
               <% if (pagination.currentPage > 4) { %>
                 <span class="px-3 py-2 text-subs">...</span>
@@ -209,9 +217,9 @@
             
             <% for (let i = startPage; i <= endPage; i++) { %>
               <% if (i === pagination.currentPage) { %>
-                <span class="bg-main text-fore border border-main rounded px-3 py-2 font-bold"><%= i %></span>
+                <span class="bg-main text-fore border border-main rounded px-3 py-2 font-bold select-none cursor-default"><%= i %></span>
               <% } else { %>
-                <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+                <a class="bg-soft border border-line rounded px-3 py-2 text-subs transition-colors hover-gradient" 
                    href="<%= buildPaginationUrl(i, req.query) %>"><%= i %></a>
               <% } %>
             <% } %>
@@ -220,12 +228,12 @@
               <% if (pagination.currentPage < pagination.totalPages - 3) { %>
                 <span class="px-3 py-2 text-subs">...</span>
               <% } %>
-              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs transition-colors hover-gradient" 
                  href="<%= buildPaginationUrl(pagination.totalPages, req.query) %>"><%= pagination.totalPages %></a>
             <% } %>
 
             <% if (pagination.currentPage < pagination.totalPages) { %>
-              <a class="bg-soft border border-line rounded px-3 py-2 text-subs hover:bg-main hover:text-fore hover:border-main transition-colors" 
+              <a class="bg-soft border border-line rounded px-3 py-2 text-subs transition-colors hover-gradient" 
                  href="<%= buildPaginationUrl(pagination.currentPage + 1, req.query) %>">»</a>
             <% } %>
           </div>
@@ -237,6 +245,47 @@
   <%- include('partials/footer') %>
 
   <script>
+    function initCustomSelects() {
+      const selects = document.querySelectorAll('[data-select]');
+
+      selects.forEach(wrapper => {
+        const select = wrapper.querySelector('select');
+        const trigger = wrapper.querySelector('[data-select-trigger]');
+        const menu = wrapper.querySelector('[data-select-menu]');
+        const options = menu ? Array.from(menu.querySelectorAll('[data-value]')) : [];
+
+        if (!select || !trigger || !menu) return;
+
+        const syncLabel = () => {
+          const selected = select.options[select.selectedIndex];
+          trigger.textContent = selected ? selected.textContent : trigger.textContent;
+        };
+
+        syncLabel();
+
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('[data-select-menu]').forEach(m => {
+            if (m !== menu) m.classList.add('hidden');
+          });
+          menu.classList.toggle('hidden');
+        });
+
+        options.forEach(option => {
+          option.addEventListener('click', () => {
+            const value = option.getAttribute('data-value');
+            select.value = value;
+            syncLabel();
+            menu.classList.add('hidden');
+          });
+        });
+      });
+
+      document.addEventListener('click', () => {
+        document.querySelectorAll('[data-select-menu]').forEach(m => m.classList.add('hidden'));
+      });
+    }
+
     function filterByLetter(letter) {
       const url = new URL(window.location);
       url.searchParams.set('letter', letter);
@@ -318,6 +367,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+      initCustomSelects();
       // Year dropdown setup
       const yearBtn = document.getElementById('yearDropdownBtn');
       const minYearSlider = document.getElementById('minYear');

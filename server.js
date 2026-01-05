@@ -1,6 +1,16 @@
 // server.js
-// Procesar argumentos para proxy personalizado
+// Procesar argumentos para proxy personalizado y puerto
 const args = process.argv.slice(2);
+
+// Configurar puerto con prioridad: argumento > entorno > hardcodeado
+let port = 3000;
+const portArgIndex = args.indexOf('--port');
+if (portArgIndex !== -1 && portArgIndex + 1 < args.length) {
+  port = parseInt(args[portArgIndex + 1]) || 3000;
+} else if (process.env.PORT) {
+  port = parseInt(process.env.PORT) || 3000;
+}
+
 if (args.includes('-p')) {
   const proxyIndex = args.indexOf('-p');
   if (proxyIndex + 1 < args.length) {
@@ -34,11 +44,10 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const { getRecentAnimes, searchAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters } = require('./utils/animeScraper');
+const { getRecentAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters } = require('./utils/animeScraper');
 const JDownloaderManager = require('./utils/jdownloader');
-const { performRequest } = require('./utils/requestHandler');
 const { getEpisodeDownloadLinks } = require('./utils/episodeParser');
-const cheerio = require('cheerio');
+const { version } = require('./package.json');
 
 // Detect SEA runtime and prepare embedded assets when available
 let assetRoot = __dirname;
@@ -64,15 +73,6 @@ try {
 } catch (err) {
   // Not running as SEA or assets unavailable; fall back to filesystem.
 }
-
-// Configuraci?n del usuario
-let userConfig = {
-  jdownloader: {
-    username: '',
-    password: ''
-  },
-  batchSize: 5
-};
 
 // Configuraci?n b?sica
 const staticDir = path.join(assetRoot, 'public');
@@ -101,8 +101,6 @@ app.get('/horario', (req, res) => {
   res.redirect('https://animeav1.com/horario');
 });
 
-
-
 // API endpoint para obtener filtros
 app.get('/api/filters', async (req, res) => {
   try {
@@ -113,8 +111,6 @@ app.get('/api/filters', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 });
-
-
 
 // Helper function for pagination URLs
 function buildPaginationUrl(page, query) {
@@ -368,21 +364,30 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-console.log('[INFO] AnimeHub v1.2.3 - Starting server...');
+console.log(`[INFO] AnimeHub v${version} - Starting server...`);
 console.log('[INFO] Working directory:', __dirname);
 console.log('[INFO] Static files from:', staticDir);
 console.log('[INFO] View engine: EJS');
 console.log('[INFO] Views directory:', viewsDir);
 
-const server = app.listen(3000, () => {
-  console.log('[INFO] Server running on http://localhost:3000');
-  console.log('[INFO] Press Ctrl+C to stop the server');
-});
+function startServer(currentPort) {
+  const server = app.listen(currentPort, () => {
+    console.log(`[INFO] Server running on http://localhost:${currentPort}`);
+    console.log('[INFO] Press Ctrl+C to stop the server');
+  });
 
-server.on('error', (error) => {
-  console.error('[ERROR] Server error:', error.message);
-  if (error.code === 'EADDRINUSE') {
-    console.error('[ERROR] Port 3000 is already in use');
-    process.exit(1);
-  }
-});
+  server.on('error', (error) => {
+    console.error('[ERROR] Server error:', error.message);
+    if (error.code === 'EADDRINUSE') {
+      if (currentPort === 3000 && port === 3000) {
+        console.log(`[WARN] Port ${currentPort} is in use, trying port 8000...`);
+        startServer(8000);
+      } else {
+        console.error(`[ERROR] Port ${currentPort} is already in use`);
+        process.exit(1);
+      }
+    }
+  });
+}
+
+startServer(port);

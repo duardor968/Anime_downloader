@@ -3,6 +3,8 @@
 /release
 package-lock.json
 
+tmp_space.zip
+
 # SEA build files
 sea-prep.blob
 /dist

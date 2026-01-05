@@ -1,27 +1,14 @@
-<!-- views/index.ejs -->
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anime Downloader</title>
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
-  <link rel="stylesheet" href="/css/tailwind.css">
-  <link rel="stylesheet" href="/css/custom-theme.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-</head>
-
-<body class="bg-body text-text font-satoshi min-h-screen flex flex-col">
-  <%- include('partials/header') %>
+<%- include('partials/header', {
+  pageTitle: 'Anime Downloader',
+  htmlClass: '',
+  bodyClass: 'bg-body text-text font-body min-h-screen flex flex-col'
+}) %>
 
   <!-- Hero Carousel -->
   <% if (featuredAnimes && featuredAnimes.length> 0) { %>
-    <section class="relative mb-12 rounded-2xl overflow-hidden shadow-2xl border border-line/70 bg-mute/80 backdrop-blur-xl"
+    <section class="relative mb-12 overflow-hidden shadow-2xl border border-line/70 bg-mute/80 backdrop-blur-xl"
       style="height: 60vh; min-height: 400px;">
-      <div class="relative w-full h-full">
-        <div class="flex transform-gpu transition-transform duration-700 ease-in-out" id="carousel-slides">
+        <div class="flex h-full w-full transform-gpu transition-transform duration-700 ease-in-out" id="carousel-slides">
           <% featuredAnimes.forEach((anime, index)=> { %>
             <article class="relative w-full shrink-0 grid items-end text-subs">
               <div class="container z-20 grid items-start gap-4 pb-12 pt-16">
@@ -46,7 +33,7 @@
                   <% if (anime.genres && anime.genres.length> 0) { %>
                     <div class="flex flex-wrap items-center gap-2">
                       <% anime.genres.forEach(genre=> { %>
-                        <a class="btn btn-xs rounded-full border-line bg-transparent text-subs hover:bg-main hover:text-fore"
+                        <a class="genre-tag"
                           href="https://animeav1.com/catalogo?genre=<%= encodeURIComponent(genre.toLowerCase()) %>"
                           target="_blank">
                           <%= genre %>
@@ -63,7 +50,7 @@
                   </div>
                   <% } %>
                     <div class="mt-2 flex flex-wrap gap-3">
-                      <a class="btn btn-primary" href="/media/<%= anime.slug %>">
+                      <a class="btn btn-primary bg-main text-fore border border-main shadow-lg shadow-main/30 hover:bg-tone hover:border-tone hover:text-fore" href="/media/<%= anime.slug %>">
                         <i class="fas fa-play text-2xl"></i> Ver Anime
                       </a>
                     </div>
@@ -73,8 +60,8 @@
                   <img class="h-full w-full object-cover" src="<%= anime.backdrop || anime.poster %>"
                     alt="<%= anime.title %> Backdrop" loading="<%= index === 0 ? 'eager' : 'lazy' %>"
                     onerror="this.style.display='none'" />
-                  <div class="absolute inset-0 bg-gradient-to-r from-body/90 via-body/60 to-transparent"></div>
-                  <div class="absolute inset-0 bg-gradient-to-t from-body/80 via-transparent to-transparent"></div>
+                  <div class="absolute inset-0 bg-linear-to-r from-body/90 via-body/60 to-transparent"></div>
+                  <div class="absolute inset-0 bg-linear-to-t from-body/80 via-transparent to-transparent"></div>
                   <div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 30%, rgba(19,19,23,0.4) 70%, rgba(19,19,23,0.8) 100%)"></div>
                 </figure>
               </div>
@@ -112,7 +99,6 @@
             </div>
           </div>
           <% } %>
-      </div>
     </section>
     <% } %>
 
@@ -129,54 +115,9 @@
 
             <% if (recentEpisodes && recentEpisodes.length> 0) { %>
               <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
-                <% recentEpisodes.forEach((episode, index)=> { %>
-                  <article
-                    class="group/item relative card-surface text-text overflow-hidden">
-                    <div class="relative">
-                      <figure class="bg-black">
-                        <img class="aspect-video w-full object-cover transition-all group-hover/item:opacity-75"
-                          src="<%= episode.poster %>" alt="<%= episode.title %>" loading="lazy"
-                          onerror="this.src='/placeholder-episode.jpg'" />
-                        <% if (episode.timeAgo) { %>
-                          <span
-                            class="absolute inset-0 grid place-content-end rounded-lg bg-gradient-to-tl from-soft px-3 py-2 text-xs font-bold text-subs">
-                            <%= episode.timeAgo %>
-                          </span>
-                          <% } %>
-
-                      </figure>
-                      <% if (episode.episodeNumber) { %>
-                        <div
-                          class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg pe-1 pt-1 sm:pe-2 sm:pt-2" style="background-color: rgb(var(--body));">
-                          <div class="bg-soft px-2 py-1 text-xs font-bold text-subs" style="border-radius: 0.25rem 0.25rem 0 0;">EP <span
-                              class="font-bold text-lead">
-                              <%= episode.episodeNumber %>
-                            </span></div>
-                        </div>
-                        <% } %>
-                          <div
-                            class="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <button
-                              class="download-episode-btn bg-main hover:bg-main/80 text-fore w-12 h-12 rounded-full transition-all duration-200 flex items-center justify-center"
-                              data-title="<%= episode.title %>" data-link="<%= episode.link %>"
-                              title="Descargar <%= episode.title %>">
-                              <i class="fas fa-download text-xl"></i>
-                            </button>
-                          </div>
-                    </div>
-                    <header class="grid items-start gap-1 p-2">
-                      <% if (episode.animeSlug) { %>
-                        <a href="/media/<%= episode.animeSlug %>" class="text-xs font-bold uppercase text-subs line-clamp-2 hover:text-main transition-colors">
-                          <%= episode.title %>
-                        </a>
-                      <% } else { %>
-                        <div class="text-xs font-bold uppercase text-subs line-clamp-2">
-                          <%= episode.title %>
-                        </div>
-                      <% } %>
-                    </header>
-                  </article>
-                  <% }); %>
+                <% recentEpisodes.forEach((episode)=> { %>
+                  <%- include('partials/card-episode', { episode, variant: 'home' }) %>
+                <% }); %>
               </div>
               <% } else { %>
                 <div class="text-center py-12">
@@ -202,30 +143,9 @@
 
             <% if (recentAnimes && recentAnimes.length> 0) { %>
               <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 xl:gap-6">
-                <% recentAnimes.forEach((anime, index)=> { %>
-                  <article class="group/item relative text-text">
-                    <div class="relative card-surface overflow-hidden">
-                      <figure class="rounded-2xl bg-black overflow-hidden">
-                        <img class="aspect-poster w-full object-cover" src="<%= anime.poster %>"
-                          alt="Portada de <%= anime.title %>" onerror="this.src='/placeholder-anime.jpg'" />
-                      </figure>
-                      <div class="absolute bottom-0 start-0 z-10 flex gap-2 rounded-se-lg bg-soft/90 pe-2 pt-2">
-                        <div class="rounded-full bg-line/90 px-3 py-1 text-[11px] font-bold text-lead tracking-wide uppercase">
-                          <%= anime.type || 'TV Anime' %>
-                        </div>
-                      </div>
-                    </div>
-                    <header class="grid items-start gap-1 p-2">
-                      <h3 class="line-clamp-2 text-sm font-bold text-lead">
-                        <%= anime.title %>
-                      </h3>
-                    </header>
-                    <a class="absolute inset-0 z-20 grid place-content-center" href="/media/<%= anime.slug %>"
-                      title="Ver <%= anime.title %>">
-                      <span class="sr-only">Ver <%= anime.title %></span>
-                    </a>
-                  </article>
-                  <% }); %>
+                <% recentAnimes.forEach((anime)=> { %>
+                  <%- include('partials/card-anime', { anime, variant: 'grid' }) %>
+                <% }); %>
               </div>
               <% } else { %>
                 <div class="text-center py-12">

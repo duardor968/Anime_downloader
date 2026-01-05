@@ -27,35 +27,35 @@ function showEpisodesInRange(start, end) {
     const screenshotUrl = animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/${episode.number}.jpg` : '';
     
     const episodeHTML = `
-      <article class="group/item text-body relative" data-episode="${episode.number}">
+      <article class="group/item relative text-text card-surface overflow-hidden" data-episode="${episode.number}">
         <div class="absolute top-3 left-3 z-20">
           <input type="checkbox" id="ep-${episode.number}" value="${episode.link}" class="episode-checkbox">
         </div>
-        
-        <div class="relative bg-current">
-          <figure class="dark rounded-lg bg-black">
-            <img class="aspect-video w-full rounded-lg object-cover transition-all group-hover/item:opacity-50" 
-                 width="300" height="169" loading="lazy" 
-                 src="${screenshotUrl}" 
-                 alt="backdrop"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-            <div class="aspect-video w-full rounded-lg bg-line flex items-center justify-center" style="display:none">
-              <i class="fas fa-film text-2xl text-subs"></i>
-            </div>
-          </figure>
-          
-          <div class="absolute bottom-0 start-0 z-10 flex gap-2 bg-body pe-1 pt-1 episode-label">
-            <div class="bg-line text-subs rounded px-2 py-1 text-xs font-bold">
-              Episodio <span class="text-lead font-bold">${episode.number}</span>
-            </div>
+
+        <figure class="relative overflow-hidden rounded-lg bg-black">
+          <img class="aspect-video w-full object-cover transition-all group-hover/item:opacity-75"
+               width="300" height="169" loading="lazy"
+               src="${screenshotUrl}"
+               alt="Episodio ${episode.number}"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="aspect-video w-full rounded-lg bg-line flex items-center justify-center" style="display:none">
+            <i class="fas fa-film text-2xl text-subs"></i>
           </div>
-          
-          <button class="absolute inset-0 m-auto grid h-12 w-12 place-content-center rounded-full bg-main text-fore opacity-0 transition-all group-hover/item:opacity-100 download-episode" 
-                  data-link="${episode.link}" 
-                  data-title="Episodio ${episode.number}">
-            <i class="fas fa-download text-xl"></i>
-          </button>
-        </div>
+
+          <div class="badge-stack select-none">
+            <span class="badge-chip badge-chip--muted">EP</span>
+            <span class="badge-chip badge-chip--main">${episode.number}</span>
+          </div>
+
+          <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center overlay-dim">
+            <button
+              class="download-episode-btn bg-main hover:bg-main/80 text-fore w-12 h-12 rounded-full transition-all duration-200 flex items-center justify-center"
+              data-title="Episodio ${episode.number}" data-link="${episode.link}"
+              title="Descargar Episodio ${episode.number}">
+              <i class="fas fa-download text-xl"></i>
+            </button>
+          </div>
+        </figure>
       </article>
     `;
     
@@ -131,13 +131,13 @@ function showToast(message, isError = false) {
     toast.innerHTML = `
       <div class="bg-soft border border-line rounded-lg p-4 shadow-lg max-w-sm">
         <div class="flex items-center gap-3">
-          <div class="flex-shrink-0">
+          <div class="shrink-0">
             <i class="fas fa-info-circle text-info" id="toast-icon"></i>
           </div>
           <div class="flex-1">
             <p class="text-sm text-text" id="toast-message">Mensaje</p>
           </div>
-          <button class="flex-shrink-0 text-subs hover:text-lead" id="toast-close">
+          <button class="shrink-0 text-subs hover:text-lead" id="toast-close">
             <i class="fas fa-times"></i>
           </button>
         </div>

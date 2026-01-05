@@ -1,0 +1,61 @@
+<%
+  const cardVariant = (typeof variant === 'undefined') ? 'home' : variant; // 'home' | 'detail'
+  const link = episode && episode.animeSlug ? `/media/${episode.animeSlug}` : '#';
+  const thumb = (episode && (episode.poster || episode.screenshotUrl)) || (typeof screenshotUrl !== 'undefined' && screenshotUrl) || '/placeholder-episode.jpg';
+  const number = episode.episodeNumber || episode.number;
+  const title = episode.title || `Episodio ${number || ''}`;
+  const timeAgo = episode.timeAgo;
+  const showCheckbox = !!(typeof selectable !== 'undefined' && selectable);
+%>
+
+<article class="group/item relative text-text">
+  <div class="relative card-surface overflow-hidden">
+    <figure class="relative overflow-hidden rounded-lg bg-black">
+      <img class="aspect-video w-full object-cover transition-all group-hover/item:opacity-75"
+        src="<%= thumb %>" alt="<%= title %>" loading="lazy"
+        onerror="this.src='/placeholder-episode.jpg'" />
+
+      <% if (timeAgo) { %>
+        <span class="absolute inset-0 grid place-content-end rounded-lg bg-linear-to-tl from-soft px-3 py-2 text-xs font-bold text-subs">
+          <%= timeAgo %>
+        </span>
+      <% } %>
+
+      <% if (number) { %>
+        <div class="badge-stack select-none">
+          <span class="badge-chip badge-chip--muted">EP</span>
+          <span class="badge-chip badge-chip--main"><%= number %></span>
+        </div>
+      <% } %>
+
+      <% if (cardVariant === 'detail' && showCheckbox) { %>
+        <label class="absolute top-2 right-2 flex items-center gap-2 bg-soft/80 text-subs text-[11px] px-2 py-1 rounded-md border border-line cursor-pointer">
+          <input type="checkbox" class="episode-select accent-main" data-episode="<%= number %>">
+          <span>Sel.</span>
+        </label>
+      <% } %>
+
+      <div class="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center overlay-dim">
+        <button
+          class="download-episode-btn bg-main hover:bg-main/80 text-fore w-12 h-12 rounded-full transition-all duration-200 flex items-center justify-center"
+          data-title="<%= title %>" data-link="<%= episode.link %>"
+          title="Descargar <%= title %>">
+          <i class="fas fa-download text-xl"></i>
+        </button>
+      </div>
+    </figure>
+  </div>
+
+  <header class="grid items-start gap-1 p-2">
+    <% if (cardVariant === 'home' && episode.animeSlug) { %>
+      <a href="<%= link %>" class="text-xs font-bold uppercase text-subs line-clamp-2 hover:text-lead transition-colors">
+        <%= title %>
+      </a>
+    <% } else { %>
+      <div class="text-xs font-bold uppercase text-subs line-clamp-2">
+        <%= title %>
+      </div>
+    <% } %>
+  </header>
+
+</article>

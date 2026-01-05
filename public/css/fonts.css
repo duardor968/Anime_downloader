@@ -1,0 +1,40 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-italic-variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/spacegrotesk-variable.ttf') format('truetype');
+  font-weight: 300 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+:root {
+  --font-headings: 'Space Grotesk', 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.font-body { font-family: var(--font-body); }
+.font-headings { font-family: var(--font-headings); }
+
+body { font-family: var(--font-body); }
+
+h1, h2, h3, h4, h5, h6,
+.display, .title, .heading {
+  font-family: var(--font-headings);
+}
+
+.font-satoshi { font-family: var(--font-body); }

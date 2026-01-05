@@ -1,0 +1,53 @@
+<%
+  const cardVariant = (typeof variant === 'undefined') ? 'grid' : variant; // 'grid' | 'related'
+  const link = anime && anime.slug ? `/media/${anime.slug}` : '#';
+  const poster = (anime && anime.poster) || '/placeholder-anime.jpg';
+  const typeLabel = (anime && anime.type) || 'TV Anime';
+%>
+
+<% if (cardVariant === 'related') { %>
+  <article class="group relative flex gap-3 rounded-xl border border-line bg-soft/70 p-3 shadow-md hover:border-main/70 hover:-translate-y-1 transition-all duration-200">
+    <figure class="w-16 h-24 rounded-lg overflow-hidden bg-black shrink-0">
+      <img class="w-full h-full object-cover" src="<%= poster %>" alt="Portada de <%= anime.title %>" onerror="this.src='/placeholder-anime.jpg'">
+    </figure>
+    <div class="flex-1 space-y-1">
+      <h3 class="text-sm font-semibold text-lead line-clamp-2"><%= anime.title %></h3>
+      <div class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-subs">
+        <span class="px-2 py-1 rounded-full bg-line/60 text-lead font-bold"><%= typeLabel %></span>
+        <% if (anime.year) { %>
+          <span class="px-2 py-1 rounded-full bg-soft text-subs border border-line/60"><%= anime.year %></span>
+        <% } %>
+      </div>
+    </div>
+    <a class="absolute inset-0" href="<%= link %>">
+      <span class="sr-only">Ver <%= anime.title %></span>
+    </a>
+  </article>
+<% } else { %>
+  <article class="group relative text-text">
+    <div class="relative card-surface overflow-hidden">
+      <figure class="rounded-2xl bg-black overflow-hidden">
+        <img class="aspect-poster w-full object-cover" src="<%= poster %>"
+          alt="Portada de <%= anime.title %>" loading="lazy" onerror="this.src='/placeholder-anime.jpg'" />
+      </figure>
+      <div class="badge-chip badge-chip--muted single-chip">
+        <%= typeLabel %>
+        <% if (anime && anime.year) { %>
+          · <%= anime.year %>
+        <% } %>
+      </div>
+    </div>
+    <header class="grid items-start gap-1 p-2">
+      <h3 class="line-clamp-2 text-sm font-bold text-lead">
+        <%= anime.title %>
+      </h3>
+      <% if (anime.year) { %>
+        <p class="text-xs text-subs"><%= anime.year %></p>
+      <% } %>
+    </header>
+    <a class="absolute inset-0 z-20 grid place-content-center" href="<%= link %>"
+      title="Ver <%= anime.title %>">
+      <span class="sr-only">Ver <%= anime.title %></span>
+    </a>
+  </article>
+<% } %>

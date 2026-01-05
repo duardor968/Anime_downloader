@@ -5,23 +5,24 @@
 
 /* Tema central */
 @theme {
-  --color-body: rgb(8, 10, 20);
-  --color-text: rgb(173, 180, 203);
+  /* Nueva paleta consistente */
+  --color-body: rgb(12, 14, 24);
+  --color-text: rgb(156, 164, 189);
   --color-lead: rgb(248, 250, 255);
-  --color-subs: rgb(131, 140, 168);
-  --color-fore: rgb(10, 12, 18);
-  --color-main: rgb(94, 230, 186);
-  --color-tone: rgb(139, 149, 255);
-  --color-mark: rgb(255, 189, 115);
-  --color-mute: rgb(16, 19, 32);
-  --color-soft: rgb(20, 24, 40);
-  --color-line: rgb(46, 54, 80);
-  --color-edge: rgb(70, 82, 118);
-  --color-fire: rgb(255, 120, 140);
-  --color-warn: rgb(242, 210, 130);
-  --color-wins: rgb(122, 237, 165);
-  --color-info: rgb(118, 186, 255);
-  --color-back: rgb(14, 16, 28);
+  --color-subs: rgb(142, 149, 178);
+  --color-fore: rgb(5, 7, 12);
+  --color-main: rgb(67, 219, 186);     /* esmeralda */
+  --color-tone: rgb(134, 166, 255);    /* violeta suave */
+  --color-mark: rgb(255, 183, 94);
+  --color-mute: rgb(18, 20, 30);
+  --color-soft: rgb(26, 29, 41);
+  --color-line: rgb(52, 58, 82);
+  --color-edge: rgb(72, 82, 110);
+  --color-fire: rgb(248, 113, 113);
+  --color-warn: rgb(220, 200, 120);
+  --color-wins: rgb(88, 232, 160);
+  --color-info: rgb(116, 186, 255);
+  --color-back: rgb(18, 20, 30);
 
   --shadow-soft: 0 10px 45px rgba(0, 0, 0, 0.32);
   --shadow-strong: 0 24px 80px rgba(0, 0, 0, 0.45);
@@ -38,6 +39,26 @@
 
 /* Estilos base */
 @layer base {
+  :root {
+    --color-body: rgb(12, 14, 24);
+    --color-text: rgb(156, 164, 189);
+    --color-lead: rgb(248, 250, 255);
+    --color-subs: rgb(142, 149, 178);
+    --color-fore: rgb(5, 7, 12);
+    --color-main: rgb(67, 219, 186);
+    --color-tone: rgb(134, 166, 255);
+    --color-mark: rgb(255, 183, 94);
+    --color-mute: rgb(18, 20, 30);
+    --color-soft: rgb(26, 29, 41);
+    --color-line: rgb(52, 58, 82);
+    --color-edge: rgb(72, 82, 110);
+    --color-fire: rgb(248, 113, 113);
+    --color-warn: rgb(220, 200, 120);
+    --color-wins: rgb(88, 232, 160);
+    --color-info: rgb(116, 186, 255);
+    --color-back: rgb(18, 20, 30);
+  }
+
   html {
     scroll-behavior: smooth;
     background: #050711;
@@ -49,10 +70,8 @@
     line-height: 1.6;
     overflow-x: hidden;
     font-size: 14px;
-    background: radial-gradient(circle at 20% 20%, rgba(139, 149, 255, 0.12), transparent 35%),
-      radial-gradient(circle at 80% 10%, rgba(94, 230, 186, 0.16), transparent 32%),
-      radial-gradient(circle at 50% 60%, rgba(255, 189, 115, 0.12), transparent 30%),
-      rgb(var(--color-body));
+    background: var(--color-body);
+    color: var(--color-text);
   }
 
   body::before {
@@ -69,6 +88,169 @@
 
 /* Componentes y utilidades personalizadas */
 @layer components {
+  /* Base color helpers */
+  .bg-body { background-color: var(--color-body); }
+  .bg-text { background-color: var(--color-text); }
+  .bg-lead { background-color: var(--color-lead); }
+  .bg-subs { background-color: var(--color-subs); }
+  .bg-fore { background-color: var(--color-fore); }
+  .bg-main { background: linear-gradient(135deg, var(--color-main), var(--color-tone)); }
+  .bg-tone { background-color: var(--color-tone); }
+  .bg-mark { background-color: var(--color-mark); }
+  .bg-mute { background-color: var(--color-mute); }
+  .bg-soft { background-color: var(--color-soft); }
+  .bg-line { background-color: var(--color-line); }
+  .bg-edge { background-color: var(--color-edge); }
+  .bg-fire { background-color: var(--color-fire); }
+  .bg-warn { background-color: var(--color-warn); }
+  .bg-wins { background-color: var(--color-wins); }
+  .bg-info { background-color: var(--color-info); }
+  .bg-back { background-color: var(--color-back); }
+  .bg-current { background-color: var(--color-soft); }
+
+  .text-body { color: var(--color-body); }
+  .text-text { color: var(--color-text); }
+  .text-lead { color: var(--color-lead); }
+  .text-subs { color: var(--color-subs); }
+  .text-fore { color: var(--color-fore); }
+  .text-main {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-tone { color: var(--color-tone); }
+  .text-mark { color: var(--color-mark); }
+  .text-mute { color: var(--color-mute); }
+  .text-soft { color: var(--color-soft); }
+  .text-line { color: var(--color-line); }
+  .text-edge { color: var(--color-edge); }
+  .text-fire { color: var(--color-fire); }
+  .text-warn { color: var(--color-warn); }
+  .text-wins { color: var(--color-wins); }
+  .text-info { color: var(--color-info); }
+  .text-back { color: var(--color-back); }
+
+  .border-line { border-color: var(--color-line); }
+  .border-main { border-color: var(--color-main); }
+  .border-soft { border-color: var(--color-soft); }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(18px);
+    background: linear-gradient(180deg, rgba(10, 14, 26, 0.8) 0%, rgba(10, 14, 26, 0.65) 100%);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-line) 80%, transparent);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .header-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: color-mix(in oklab, var(--color-soft) 85%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-line) 90%, transparent);
+    border-radius: 999px;
+    color: var(--color-subs);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.2s ease, transform 0.2s ease;
+  }
+  .header-nav-btn:hover {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    color: var(--color-fore);
+    border-color: transparent;
+    transform: translateY(-1px);
+  }
+
+  .genre-tag {
+    @apply inline-flex items-center gap-2 rounded-full text-sm font-semibold no-underline transition-all duration-200;
+    padding: 0.5rem 0.95rem;
+    background: color-mix(in oklab, var(--color-soft) 90%, transparent);
+    color: var(--color-subs);
+    border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
+  }
+  .genre-tag:hover {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    color: var(--color-fore);
+    border-color: transparent;
+    transform: translateY(-1px);
+  }
+
+  .badge-stack {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-body) 85%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    z-index: 20;
+  }
+
+  .badge-chip {
+    @apply inline-flex items-center justify-center rounded-full text-[11px] font-bold uppercase tracking-wide border border-transparent;
+    padding: 0.2rem 0.65rem;
+    transition: transform 0.2s ease, background 0.3s ease, border-color 0.2s ease;
+  }
+
+  .badge-chip--muted {
+    background: color-mix(in oklab, var(--color-soft) 90%, transparent);
+    color: var(--color-subs);
+    border-color: color-mix(in oklab, var(--color-line) 80%, transparent);
+  }
+
+  .badge-chip--main {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    color: var(--color-fore);
+    border-color: color-mix(in oklab, var(--color-main) 90%, transparent);
+    box-shadow: 0 6px 16px color-mix(in oklab, var(--color-main) 35%, transparent);
+  }
+
+  .badge-chip--status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.7rem;
+    background: color-mix(in oklab, var(--color-soft) 92%, transparent);
+    color: var(--color-subs);
+    border: 1px solid color-mix(in oklab, var(--color-line) 90%, transparent);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  }
+  .badge-chip--status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-main);
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-main) 20%, transparent);
+    animation: statusPulse 1.8s infinite;
+  }
+
+  .single-chip {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  }
+
+  .overlay-dim { z-index: 10; }
+  .download-episode-btn { cursor: pointer; }
+
+  .placeholder-subs::placeholder { color: var(--color-subs); }
+
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-decoration {
+    cursor: pointer;
+  }
+
   .container {
     max-width: 1280px;
     margin: 0 auto;
@@ -80,8 +262,8 @@
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, rgb(var(--color-main)), rgb(var(--color-tone)));
-    box-shadow: 0 10px 40px rgba(94, 230, 186, 0.25);
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    box-shadow: 0 10px 40px color-mix(in oklab, var(--color-main) 25%, transparent);
     @apply text-fore border-transparent hover:-translate-y-0.5 hover:shadow-xl hover:shadow-main/30;
   }
 
@@ -121,14 +303,114 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 20% 20%, rgba(var(--color-main), 0.06), transparent 35%),
-      radial-gradient(circle at 80% 0%, rgba(var(--color-tone), 0.05), transparent 30%);
+    background: radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--color-main) 6%, transparent), transparent 35%),
+      radial-gradient(circle at 80% 0%, color-mix(in oklab, var(--color-tone) 5%, transparent), transparent 30%);
     pointer-events: none;
     mix-blend-mode: screen;
   }
 
   .input-field {
     @apply w-full rounded-xl bg-soft/80 border border-line px-4 py-3 text-lead placeholder:text-subs focus:border-main focus:outline-none transition-colors backdrop-blur;
+  }
+
+  .select-field {
+    @apply w-full rounded-xl bg-soft/90 border border-line px-4 py-3 text-lead placeholder:text-subs focus:border-main focus:outline-none transition-colors backdrop-blur appearance-none pr-12 cursor-pointer;
+  }
+
+  .select-field:focus {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-main) 25%, transparent);
+  }
+
+  .icon-gradient {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .icon-gradient-hover {
+    display: inline-flex;
+    line-height: 1;
+    vertical-align: middle;
+    padding-top: 1px;
+  }
+
+  .icon-hover-gradient:hover .icon-gradient-hover {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hover-gradient:hover {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    color: var(--color-fore);
+    border-color: transparent;
+  }
+
+  .filters-shell {
+    position: relative;
+    z-index: 400;
+    isolation: isolate;
+  }
+
+  .results-shell {
+    position: relative;
+    z-index: 0;
+  }
+
+  .icon-btn {
+    line-height: 1;
+    overflow: visible;
+  }
+
+  .icon-btn i {
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .select-shell {
+    @apply relative w-full;
+  }
+
+  .select-button {
+    @apply w-full flex items-center justify-between rounded-xl bg-soft/90 border border-line px-4 py-3 text-lead transition-colors backdrop-blur cursor-pointer;
+  }
+
+  .select-button:hover {
+    border-color: color-mix(in oklab, var(--color-main) 50%, transparent);
+  }
+
+  .select-menu {
+    @apply absolute left-0 right-0 mt-2 rounded-xl border border-line bg-mute shadow-lg z-50 overflow-hidden;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .select-shell {
+    z-index: 200;
+  }
+
+  .select-menu {
+    z-index: 300;
+  }
+
+  .card-surface {
+    position: relative;
+    z-index: 1;
+  }
+
+  .select-option {
+    @apply w-full text-left px-4 py-2 text-sm text-subs transition-colors cursor-pointer;
+  }
+
+  .select-option:hover {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    color: var(--color-fore);
   }
 
   .tag-list {
@@ -163,6 +445,12 @@
 }
 
 @layer utilities {
+  @keyframes statusPulse {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.7; }
+  }
+
   @keyframes fadeIn {
     0% { opacity: 0; }
     100% { opacity: 1; }
@@ -198,7 +486,7 @@
   }
 
   .divider {
-    @apply h-px w-full bg-gradient-to-r from-transparent via-line to-transparent opacity-80;
+    @apply h-px w-full bg-linear-to-r from-transparent via-line to-transparent opacity-80;
   }
 
   .halo {

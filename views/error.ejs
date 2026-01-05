@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Error - Anime Downloader</title>
-  <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
-  <link rel="stylesheet" href="/css/tailwind.css">
-  <link rel="stylesheet" href="/css/custom-theme.css">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="bg-body text-text min-h-screen flex items-center justify-center">
+<%- include('partials/header', {
+  pageTitle: 'Error - Anime Downloader',
+  htmlClass: '',
+  bodyClass: 'bg-body text-text font-body min-h-screen flex items-center justify-center',
+  showHeader: false
+}) %>
   <div class="section-shell text-center px-10 py-12 space-y-4">
     <h1 class="text-6xl font-bold text-main mb-2"><%= error.status || 500 %></h1>
     <h2 class="text-2xl font-semibold text-lead"><%= message || 'Error interno del servidor' %></h2>
