@@ -356,6 +356,52 @@
     isolation: isolate;
   }
 
+  .audio-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-soft) 85%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-line) 80%, transparent);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  }
+
+  .audio-choice {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .audio-choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .audio-option {
+    cursor: pointer;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-subs);
+    background: color-mix(in oklab, var(--color-soft) 90%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-line) 80%, transparent);
+    transition: background 0.25s ease, color 0.2s ease, border-color 0.25s ease, transform 0.2s ease;
+  }
+
+  .audio-choice input:checked + .audio-option {
+    background: linear-gradient(135deg, var(--color-main), var(--color-tone));
+    color: var(--color-fore);
+    border-color: transparent;
+    box-shadow: 0 6px 16px color-mix(in oklab, var(--color-main) 35%, transparent);
+  }
+
+  .audio-choice input:focus-visible + .audio-option {
+    outline: 2px solid color-mix(in oklab, var(--color-main) 60%, transparent);
+    outline-offset: 2px;
+  }
+
   .results-shell {
     position: relative;
     z-index: 0;

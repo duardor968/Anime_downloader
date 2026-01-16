@@ -271,7 +271,7 @@ app.get('/media/:slug', async (req, res) => {
 });
 
 app.post('/download', async (req, res) => {
-  const { animeName, episodes } = req.body;
+  const { animeName, episodes, audioType } = req.body;
 
   // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
@@ -289,7 +289,7 @@ app.post('/download', async (req, res) => {
     res.write(`data: {"msg":"Extrayendo enlaces ${i + 1}/${total}","done":false}\n\n`);
 
     const links = await require('./utils/episodeParser')
-      .getEpisodeDownloadLinks(ep.link);
+      .getEpisodeDownloadLinks(ep.link, audioType);
     allLinks.push(...links);
   }
 
@@ -310,13 +310,13 @@ app.post('/download', async (req, res) => {
 
 // Ruta para descargar episodio individual desde la página de inicio
 app.post('/download-episode', async (req, res) => {
-  const { episodeTitle, episodeLink } = req.body;
+  const { episodeTitle, episodeLink, audioType } = req.body;
 
   try {
     const jdownloader = new JDownloaderManager();
 
     // Extraer enlaces del episodio
-    const links = await getEpisodeDownloadLinks(episodeLink);
+    const links = await getEpisodeDownloadLinks(episodeLink, audioType);
     
     if (links.length === 0) {
       return res.json({ success: false, message: 'No se encontraron enlaces de descarga' });

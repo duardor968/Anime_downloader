@@ -93,11 +93,21 @@
                   <span>Ver Tráiler</span>
                 </a>
               <% } %>
-              <div class="flex-1 lg:flex-none"></div>
-              <button class="btn btn-primary bg-main text-fore border border-main shadow-lg shadow-main/30 hover:bg-tone hover:border-tone hover:text-fore" id="downloadAllBtn">
+              <button class="btn btn-primary bg-main text-fore border border-main shadow-lg shadow-main/30 hover:bg-tone hover:border-tone hover:text-fore cursor-pointer" id="downloadAllBtn">
                 <i class="fas fa-download"></i>
                 <span>Descargar Todo</span>
               </button>
+              <div class="flex-1"></div>
+              <div class="audio-toggle" role="radiogroup" aria-label="Audio">
+                <label class="audio-choice">
+                  <input type="radio" name="audioType" value="SUB" checked>
+                  <span class="audio-option">SUB</span>
+                </label>
+                <label class="audio-choice">
+                  <input type="radio" name="audioType" value="DUB">
+                  <span class="audio-option">DUB</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>

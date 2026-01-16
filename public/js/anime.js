@@ -180,7 +180,12 @@ function hideToast() {
 }
 
 /* ---------- Descarga de episodios ---------- */
-async function startDownload(episodes) {
+function getSelectedAudioType() {
+  const selected = document.querySelector('input[name="audioType"]:checked');
+  return selected ? selected.value : null;
+}
+
+async function startDownload(episodes, audioType) {
   const animeName = window.animeData?.title || 'Anime';
 
   try {
@@ -189,7 +194,7 @@ async function startDownload(episodes) {
     const res = await fetch('/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ animeName, episodes })
+      body: JSON.stringify({ animeName, episodes, audioType })
     });
 
     if (!res.ok) {
@@ -227,7 +232,12 @@ async function startDownload(episodes) {
 document.getElementById('downloadAllBtn')?.addEventListener('click', () => {
   if (window.animeData?.episodes) {
     const eps = window.animeData.episodes.map(e => ({ number: e.number, link: e.link }));
-    startDownload(eps);
+    const audioType = getSelectedAudioType();
+    if (!audioType) {
+      showToast('Selecciona SUB o DUB para descargar', true);
+      return;
+    }
+    startDownload(eps, audioType);
   } else {
     showToast('No hay episodios disponibles para descargar', true);
   }
@@ -235,12 +245,18 @@ document.getElementById('downloadAllBtn')?.addEventListener('click', () => {
 
 /* Descarga individual de episodios */
 document.addEventListener('click', function (e) {
-  if (e.target.closest('.download-episode')) {
+  if (e.target.closest('.download-episode-btn')) {
     e.preventDefault();
-    const btn = e.target.closest('.download-episode');
+    const btn = e.target.closest('.download-episode-btn');
     const episodeLink = btn.dataset.link;
     const episodeTitle = btn.dataset.title;
     const animeName = window.animeData?.title || 'Anime';
+    const audioType = getSelectedAudioType();
+
+    if (!audioType) {
+      showToast('Selecciona SUB o DUB para descargar', true);
+      return;
+    }
 
     const fullEpisodeTitle = `${animeName} - ${episodeTitle}`;
 
@@ -251,7 +267,7 @@ document.addEventListener('click', function (e) {
     fetch('/download-episode', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ episodeTitle: fullEpisodeTitle, episodeLink })
+      body: JSON.stringify({ episodeTitle: fullEpisodeTitle, episodeLink, audioType })
     })
       .then(response => response.json())
       .then(data => {
@@ -303,7 +319,12 @@ document.getElementById('downloadSelectedBtn')?.addEventListener('click', () => 
     showToast('No hay episodios seleccionados', true);
     return;
   }
-  startDownload(eps);
+  const audioType = getSelectedAudioType();
+  if (!audioType) {
+    showToast('Selecciona SUB o DUB para descargar', true);
+    return;
+  }
+  startDownload(eps, audioType);
 });
 
 // Botón limpiar selección
