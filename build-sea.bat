@@ -12,23 +12,23 @@ pushd %~dp0
 for /f "usebackq" %%v in (`node -p "require('./package.json').version"`) do set APP_VERSION=%%v
 echo === AnimeHub SEA build - version %APP_VERSION% ===
 
-echo [1/7] Cleaning output folders...
+echo [1/8] Cleaning output folders...
 if exist dist rmdir /S /Q dist
 if exist release rmdir /S /Q release
 if exist sea-prep.blob del /f /q sea-prep.blob
 mkdir release
 
-echo [2/7] Generating asset manifest...
+echo [2/8] Generating asset manifest...
 call npm run --silent generate:assets
 
-echo [3/7] Bundling with ncc...
+echo [3/8] Bundling with ncc...
 call npx --yes @vercel/ncc build server.js -o dist --quiet
 
-echo [4/7] Generating SEA blob...
+echo [4/8] Generating SEA blob...
 node scripts/build-sea-config.js
 node --experimental-sea-config sea-config.generated.json
 
-echo [5/7] Locating node.exe...
+echo [5/8] Locating node.exe...
 if not defined NODE_EXE for /f "usebackq tokens=*" %%p in (`node -p "process.execPath"`) do set "NODE_EXE=%%p"
 if not exist "%NODE_EXE%" (
   echo node.exe no encontrado. Define NODE_EXE o instala Node.js.
@@ -36,11 +36,11 @@ if not exist "%NODE_EXE%" (
 )
 copy /Y "%NODE_EXE%" "release\\AnimeHub-v%APP_VERSION%-windows.exe" >nul
 
-echo [6/7] Injecting SEA blob into executable...
+echo [6/8] Injecting SEA blob into executable...
 call npx --yes postject "release\\AnimeHub-v%APP_VERSION%-windows.exe" NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --overwrite
 
 if exist "public\\images\\favicon.ico" (
-  echo [6b/7] Embedding icon and metadata via JSON definition...
+  echo [6b/8] Embedding icon and metadata via JSON definition...
   
   set TEMP_DEF=%CD%\temp-version-definition.json
 
@@ -80,7 +80,25 @@ if exist "public\\images\\favicon.ico" (
 
 )
 
-echo [7/7] Cleaning temporary files...
+echo [7/8] Compressing with UPX...
+where upx >nul 2>nul
+if %errorlevel%==0 (
+  echo [7a/8] Patching PE headers for UPX...
+  node scripts\\patch-pe-rsrc.js "release\\AnimeHub-v%APP_VERSION%-windows.exe"
+  if errorlevel 1 (
+    echo [WARN] PE patch failed. Trying UPX anyway.
+  )
+  upx -q --no-lzma "release\\AnimeHub-v%APP_VERSION%-windows.exe"
+  if errorlevel 1 (
+    echo [WARN] UPX compression failed. Continuing without compression.
+  ) else (
+    echo [INFO] UPX compression completed.
+  )
+) else (
+  echo [INFO] UPX not found. Skipping compression.
+)
+
+echo [8/8] Cleaning temporary files...
 if exist sea-prep.blob del /f /q sea-prep.blob
 if exist sea-config.generated.json del /f /q sea-config.generated.json
 

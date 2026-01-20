@@ -65,7 +65,8 @@ function showEpisodesInRange(start, end) {
   // Actualizar el texto del rango actual
   const currentRangeElement = document.getElementById('currentRange');
   if (currentRangeElement) {
-    currentRangeElement.textContent = `${start} - ${Math.min(end, allEpisodes.length)}`;
+    const maxNum = Math.max(...allEpisodes.map(ep => parseInt(ep.number) || 0));
+    currentRangeElement.textContent = `${start} - ${Math.min(end, maxNum)}`;
   }
 }
 
@@ -89,8 +90,10 @@ document.getElementById('episodeRangeBtn')?.addEventListener('click', function()
   // Generar opciones de rango
   const ranges = [];
   const rangeSize = 50;
-  for (let i = 1; i <= allEpisodes.length; i += rangeSize) {
-    const end = Math.min(i + rangeSize - 1, allEpisodes.length);
+  const minEpisode = Math.min(...allEpisodes.map(ep => parseInt(ep.number) || 0));
+  const maxEpisode = Math.max(...allEpisodes.map(ep => parseInt(ep.number) || 0));
+  for (let i = minEpisode; i <= maxEpisode; i += rangeSize) {
+    const end = Math.min(i + rangeSize - 1, maxEpisode);
     ranges.push({ start: i, end: end, label: `${i} - ${end}` });
   }
 
@@ -368,6 +371,9 @@ document.getElementById('episodeSearch')?.addEventListener('input', function() {
 // Inicializar la vista con los primeros 50 episodios
 document.addEventListener('DOMContentLoaded', function() {
   if (allEpisodes.length > 0) {
-    showEpisodesInRange(1, Math.min(50, allEpisodes.length));
+    const minEpisode = Math.min(...allEpisodes.map(ep => parseInt(ep.number) || 0));
+    const maxEpisode = Math.max(...allEpisodes.map(ep => parseInt(ep.number) || 0));
+    const start = minEpisode === 0 ? 0 : 1;
+    showEpisodesInRange(start, Math.min(start + 49, maxEpisode));
   }
 });

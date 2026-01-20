@@ -215,6 +215,10 @@ Los scripts:
 
 El binario resultante queda en `release/` y no requiere carpetas auxiliares.
 
+Notas de build:
+- Windows: si `upx` está disponible, el script intenta comprimir el ejecutable y aplica un parche de cabeceras PE para evitar errores de UPX.
+- Linux: UPX se omite por compatibilidad (los binarios SEA suelen fallar con `bad e_phoff`).
+
 ### Estructura de rutas
 
 ```javascript

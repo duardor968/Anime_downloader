@@ -301,6 +301,7 @@ async function getAnimeDetails(slug) {
     });
     
     const type = metaInfo.find(info => info.includes('Anime') || info.includes('Movie') || info.includes('OVA')) || 'TV Anime';
+    const isMovie = /movie|pelicula/i.test(type) || /movie/i.test(slug);
     const year = metaInfo.find(info => /^\d{4}$/.test(info)) || new Date().getFullYear().toString();
     const season = metaInfo.find(info => info.includes('Temporada') || info.includes('Otoño') || info.includes('Primavera') || info.includes('Verano') || info.includes('Invierno')) || '';
     const status = metaInfo.find(info => info.includes('emisión') || info.includes('Finalizado')) || 'Desconocido';
@@ -419,33 +420,42 @@ async function getAnimeDetails(slug) {
       }
     }
     
-    // Si encontramos el total de episodios, generar todos los episodios
-    if (totalEpisodes > 0) {
+    // Si es pelicula, usar episodio 0
+    if (isMovie) {
+      console.log(`[INFO] Movie detected. Using episode 0 for ${slug}`);
+      allEpisodes.push({
+        number: '0',
+        title: 'Episodio 0',
+        screenshot: animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/0.jpg` : null,
+        link: `https://animeav1.com/media/${slug}/0`,
+        slug: '0'
+      });
+    } else if (totalEpisodes > 0) {
       console.log(`[INFO] Generating ${totalEpisodes} episodes for ${slug}`);
       
       for (let i = 1; i <= totalEpisodes; i++) {
         allEpisodes.push({
           number: i.toString(),
-          title: `Episodio ${i}`,
+          title: `Episodio ${i}` ,
           screenshot: animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/${i}.jpg` : null,
-          link: `https://animeav1.com/media/${slug}/${i}`,
+          link: `https://animeav1.com/media/${slug}/${i}` ,
           slug: i.toString()
         });
       }
     } else {
-      // Fallback: scrapear episodios de la página actual
+      // Fallback: scrapear episodios de la pagina actual
       console.log('[INFO] Scraping episodes from current page...');
       
-      // Buscar episodios con selectores más amplios
-      $('article.group\\/item, .episode-card, article[data-episode]').each((index, element) => {
+      // Buscar episodios con selectores mas amplios
+      $('article.group\/item, .episode-card, article[data-episode]').each((index, element) => {
         const $element = $(element);
         
-        // Extraer número de episodio con múltiples selectores
+        // Extraer numero de episodio con multiples selectores
         let episodeNumber = $element.find('.text-lead.font-bold, .episode-number, [data-episode]').text().trim() ||
                            $element.attr('data-episode') ||
                            $element.find('span.text-lead').text().trim();
         
-        // Limpiar número de episodio
+        // Limpiar numero de episodio
         episodeNumber = episodeNumber.replace(/[^\d]/g, '');
         
         // Extraer imagen del episodio (screenshot)
@@ -454,12 +464,12 @@ async function getAnimeDetails(slug) {
         // Extraer enlace del episodio
         const episodeLink = $element.find('a').attr('href');
         
-        if (episodeNumber && episodeLink) {
+        if (episodeNumber !== '' && episodeLink) {
           allEpisodes.push({
             number: episodeNumber,
-            title: `Episodio ${episodeNumber}`,
+            title: `Episodio ${episodeNumber}` ,
             screenshot: screenshot ? (screenshot.startsWith('http') ? screenshot : `https://animeav1.com${screenshot}`) : null,
-            link: episodeLink.startsWith('http') ? episodeLink : `https://animeav1.com${episodeLink}`,
+            link: episodeLink.startsWith('http') ? episodeLink : `https://animeav1.com${episodeLink}` ,
             slug: episodeLink.split('/').pop()
           });
         }
@@ -471,15 +481,14 @@ async function getAnimeDetails(slug) {
         for (let i = 1; i <= 12; i++) {
           allEpisodes.push({
             number: i.toString(),
-            title: `Episodio ${i}`,
+            title: `Episodio ${i}` ,
             screenshot: null,
-            link: `https://animeav1.com/media/${slug}/${i}`,
+            link: `https://animeav1.com/media/${slug}/${i}` ,
             slug: i.toString()
           });
         }
       }
     }
-    
     // Ordenar episodios por número
     allEpisodes.sort((a, b) => {
       const numA = parseInt(a.number) || 0;

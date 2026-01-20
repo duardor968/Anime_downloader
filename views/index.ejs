@@ -11,7 +11,7 @@
         <div class="flex h-full w-full transform-gpu transition-transform duration-700 ease-in-out" id="carousel-slides">
           <% featuredAnimes.forEach((anime, index)=> { %>
             <article class="relative w-full shrink-0 grid items-end text-subs">
-              <div class="container z-20 grid items-start gap-4 pb-12 pt-16">
+              <div class="container z-20 grid items-start gap-4 pb-24 pt-16">
                 <header class="grid items-start gap-4">
                   <h1 class="text-4xl font-semibold text-lead">
                     <%= anime.title %>
@@ -70,7 +70,7 @@
         </div>
 
         <% if (featuredAnimes.length> 1) { %>
-          <div class="absolute inset-x-0 bottom-12 z-30 hidden items-end justify-between sm:flex container">
+          <div class="absolute inset-x-0 bottom-6 z-30 hidden items-end justify-between sm:flex container carousel-controls">
             <div class="flex items-center gap-2">
               <div class="flex gap-1" id="carousel-indicators">
                 <% featuredAnimes.forEach((anime, index)=> { %>

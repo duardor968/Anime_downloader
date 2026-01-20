@@ -27,7 +27,7 @@ node scripts/build-sea-config.js
 node --experimental-sea-config sea-config.generated.json
 
 echo "[5/7] Copying Node binary..."
-NODE_BIN="${NODE_BIN:-$(node -p "process.execPath")}"
+NODE_BIN="${NODE_BIN:-$(node -p "process.execPath")}" 
 if [ ! -f "$NODE_BIN" ]; then
   echo "Node binary not found. Set NODE_BIN or install Node.js." >&2
   exit 1

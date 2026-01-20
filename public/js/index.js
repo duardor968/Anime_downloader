@@ -68,19 +68,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Carousel functionality
+  // Carousel functionality (reworked)
   const carouselSlides = document.getElementById('carousel-slides');
   const prevBtn = document.getElementById('carousel-prev');
   const nextBtn = document.getElementById('carousel-next');
   const indicators = document.querySelectorAll('.carousel-indicator');
   const currentSlideEl = document.getElementById('current-slide');
+  const progressBar = document.getElementById('progress-bar');
 
   if (carouselSlides && prevBtn && nextBtn) {
-    let currentSlide = 0;
     const slides = carouselSlides.children;
     const totalSlides = slides.length;
-    let autoPlayInterval;
-    let progress = 0;
+    const duration = 6000;
+    let currentSlide = 0;
+    let progressMs = 0;
+    let rafId = null;
+    let lastTime = null;
+    let paused = false;
 
     function updateIndicators() {
       indicators.forEach((indicator, index) => {
@@ -97,88 +101,105 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
+    function applyTransform() {
+      carouselSlides.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
+
+    function setProgress(value) {
+      progressMs = Math.max(0, Math.min(value, duration));
+      if (progressBar) {
+        progressBar.style.width = `${(progressMs / duration) * 100}%`;
+      }
+    }
+
     function goToSlide(index) {
-      currentSlide = index;
-      carouselSlides.style.transform = `translateX(-${index * 100}%)`;
+      currentSlide = (index + totalSlides) % totalSlides;
+      applyTransform();
       updateIndicators();
+      setProgress(0);
     }
 
     function nextSlide() {
-      currentSlide = (currentSlide + 1) % totalSlides;
-      goToSlide(currentSlide);
+      goToSlide(currentSlide + 1);
     }
 
     function prevSlide() {
-      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-      goToSlide(currentSlide);
+      goToSlide(currentSlide - 1);
+    }
+
+    function tick(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const delta = timestamp - lastTime;
+      lastTime = timestamp;
+
+      if (!paused && totalSlides > 1) {
+        setProgress(progressMs + delta);
+        if (progressMs >= duration) {
+          nextSlide();
+        }
+      }
+
+      rafId = requestAnimationFrame(tick);
     }
 
     function startAutoPlay() {
-      if (totalSlides <= 1) return;
-      
-      // Limpiar intervalo previo si existe
-      if (autoPlayInterval) {
-        clearInterval(autoPlayInterval);
-      }
-      
-      const progressBar = document.getElementById('progress-bar');
-      progress = 0;
-      
-      autoPlayInterval = setInterval(() => {
-        progress += 2;
-        if (progressBar) {
-          progressBar.style.width = progress + '%';
-        }
-        
-        if (progress >= 100) {
-          progress = 0;
-          nextSlide();
-        }
-      }, 100);
+      if (rafId) cancelAnimationFrame(rafId);
+      lastTime = null;
+      paused = false;
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function pauseAutoPlay() {
+      paused = true;
+    }
+
+    function resumeAutoPlay() {
+      paused = false;
+      lastTime = null;
     }
 
     prevBtn.addEventListener('click', () => {
       prevSlide();
-      startAutoPlay();
+      resumeAutoPlay();
     });
 
     nextBtn.addEventListener('click', () => {
       nextSlide();
-      startAutoPlay();
+      resumeAutoPlay();
     });
 
-    // Indicator clicks
     indicators.forEach((indicator, index) => {
       indicator.addEventListener('click', () => {
         goToSlide(index);
-        startAutoPlay();
+        resumeAutoPlay();
       });
     });
 
-    // Pause on hover
-    carouselSlides.addEventListener('mouseenter', () => {
-      if (autoPlayInterval) {
-        clearInterval(autoPlayInterval);
-        autoPlayInterval = null;
+    carouselSlides.addEventListener('mouseenter', pauseAutoPlay);
+    carouselSlides.addEventListener('mouseleave', resumeAutoPlay);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        pauseAutoPlay();
+      } else {
+        resumeAutoPlay();
       }
     });
-    carouselSlides.addEventListener('mouseleave', startAutoPlay);
 
-    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         prevSlide();
-        startAutoPlay();
+        resumeAutoPlay();
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         nextSlide();
-        startAutoPlay();
+        resumeAutoPlay();
       }
     });
 
-    // Initialize
     updateIndicators();
+    setProgress(0);
     startAutoPlay();
   }
 
