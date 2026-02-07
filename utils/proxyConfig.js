@@ -1,7 +1,5 @@
 // utils/proxyConfig.js
 const axios = require('axios');
-const { HttpsProxyAgent } = require('https-proxy-agent');
-const { HttpProxyAgent } = require('http-proxy-agent');
 
 function getSystemProxy() {
   // Obtener configuración de proxy del sistema desde variables de entorno
@@ -37,22 +35,12 @@ function createAxiosInstance() {
     // Usar el mismo proxy para HTTP y HTTPS
     const proxyUrl = proxyConfig.https || proxyConfig.http;
     
-    // Configuración específica para proxies corporativos
-    const agentOptions = {
-      keepAlive: true,
-      keepAliveMsecs: 1000,
-      maxSockets: 256,
-      maxFreeSockets: 256
-    };
-    
-    config.httpAgent = new HttpProxyAgent(proxyUrl, agentOptions);
-    config.httpsAgent = new HttpsProxyAgent(proxyUrl, agentOptions);
-    
     // Configuración de proxy directa como fallback
+    const parsedUrl = new URL(proxyUrl);
     config.proxy = {
-      protocol: 'http',
-      host: proxyUrl.split('://')[1].split(':')[0],
-      port: parseInt(proxyUrl.split(':')[2] || '8080'),
+      protocol: parsedUrl.protocol.replace(':', ''),
+      host: parsedUrl.hostname,
+      port: parseInt(parsedUrl.port || '8080', 10),
       auth: undefined // Sin autenticación por ahora
     };
     

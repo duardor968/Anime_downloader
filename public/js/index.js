@@ -187,6 +187,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('keydown', (e) => {
+      const target = e.target;
+      const isEditable =
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+
+      if (isEditable) {
+        return;
+      }
+
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         prevSlide();
