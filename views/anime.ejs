@@ -139,7 +139,7 @@
           <div class="flex items-center gap-2">
             <% if (anime.episodeRanges && anime.episodeRanges.length > 1) { %>
               <button class="btn btn-sm btn-soft" id="episodeRangeBtn" style="min-width: 120px;">
-                <span class="text-subs" id="currentRange">1 - 50</span>
+                <span class="text-subs" id="currentRange"><%= anime.episodeRanges[0].label %></span>
                 <span class="ic-chevron-down text-subs text-lg" aria-hidden="true"></span>
               </button>
             <% } %>

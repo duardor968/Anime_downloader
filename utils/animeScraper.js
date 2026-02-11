@@ -301,7 +301,6 @@ async function getAnimeDetails(slug) {
     });
     
     const type = metaInfo.find(info => info.includes('Anime') || info.includes('Movie') || info.includes('OVA')) || 'TV Anime';
-    const isMovie = /movie|pelicula/i.test(type) || /movie/i.test(slug);
     const year = metaInfo.find(info => /^\d{4}$/.test(info)) || new Date().getFullYear().toString();
     const season = metaInfo.find(info => info.includes('Temporada') || info.includes('Otoño') || info.includes('Primavera') || info.includes('Verano') || info.includes('Invierno')) || '';
     const status = metaInfo.find(info => info.includes('emisión') || info.includes('Finalizado')) || 'Desconocido';
@@ -383,18 +382,21 @@ async function getAnimeDetails(slug) {
     console.log('[INFO] Extracting episodes...');
     let allEpisodes = [];
     
-    // Primero, intentar obtener el número total de episodios desde los datos JSON embebidos
+    // Intentar obtener episodios desde los datos embebidos de la página
     let totalEpisodes = 0;
     const episodeScriptTags = $('script').toArray();
+    const scriptContents = [];
     for (const script of episodeScriptTags) {
       const scriptContent = $(script).html();
+      if (scriptContent) {
+        scriptContents.push(scriptContent);
+      }
       if (scriptContent && scriptContent.includes('episodesCount')) {
         try {
           const episodeCountMatch = scriptContent.match(/"?episodesCount"?\s*:\s*(\d+)/);
-          if (episodeCountMatch) {
+          if (episodeCountMatch && totalEpisodes === 0) {
             totalEpisodes = parseInt(episodeCountMatch[1]);
             console.log(`[INFO] Found total episodes from JSON: ${totalEpisodes}`);
-            break;
           }
         } catch (e) {
           // Continuar si hay error parseando
@@ -402,52 +404,58 @@ async function getAnimeDetails(slug) {
       }
     }
     
-    // Extraer el ID numérico del anime desde los datos JSON
+    // Extraer ID numérico del anime y lista serializada de episodios
     let animeId = null;
-    for (const script of episodeScriptTags) {
-      const scriptContent = $(script).html();
-      if (scriptContent && scriptContent.includes('id:')) {
+    let embeddedEpisodeNumbers = [];
+
+    for (const scriptContent of scriptContents) {
+      if (!animeId && scriptContent.includes('id:')) {
         try {
           const idMatch = scriptContent.match(/id:\s*(\d+)/) || scriptContent.match(/"id"\s*:\s*(\d+)/);
           if (idMatch) {
             animeId = idMatch[1];
             console.log(`[INFO] Found animeId: ${animeId}`);
-            break;
           }
         } catch (e) {
           // Continuar si hay error parseando
         }
       }
+
+      if (embeddedEpisodeNumbers.length === 0 && scriptContent.includes('episodes:[')) {
+        embeddedEpisodeNumbers = extractEpisodeNumbersFromSerializedData(scriptContent);
+      }
     }
-    
-    // Si es pelicula, usar episodio 0
-    if (isMovie) {
-      console.log(`[INFO] Movie detected. Using episode 0 for ${slug}`);
-      allEpisodes.push({
-        number: '0',
-        title: 'Episodio 0',
-        screenshot: animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/0.jpg` : null,
-        link: `https://animeav1.com/media/${slug}/0`,
-        slug: '0'
-      });
+
+    if (embeddedEpisodeNumbers.length > 0) {
+      console.log(`[INFO] Found ${embeddedEpisodeNumbers.length} embedded episode numbers for ${slug}`);
+      allEpisodes = buildEpisodesFromNumbers(embeddedEpisodeNumbers, slug, animeId);
     } else if (totalEpisodes > 0) {
-      console.log(`[INFO] Generating ${totalEpisodes} episodes for ${slug}`);
-      
-      for (let i = 1; i <= totalEpisodes; i++) {
-        allEpisodes.push({
-          number: i.toString(),
-          title: `Episodio ${i}` ,
-          screenshot: animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/${i}.jpg` : null,
-          link: `https://animeav1.com/media/${slug}/${i}` ,
-          slug: i.toString()
-        });
+      // Fallback: inferir secuencia desde enlaces visibles y episodesCount
+      const linkedEpisodeNumbers = extractEpisodeNumbersFromMediaLinks(response.data, slug);
+      if (linkedEpisodeNumbers.length > 0) {
+        const inferredStart = Math.min(...linkedEpisodeNumbers);
+        console.log(`[INFO] Inferred start episode ${inferredStart} from links for ${slug}`);
+
+        const inferredSequence = [];
+        for (let i = inferredStart; i < inferredStart + totalEpisodes; i++) {
+          inferredSequence.push(i);
+        }
+        allEpisodes = buildEpisodesFromNumbers(inferredSequence, slug, animeId);
+      } else {
+        // Último fallback cuando no hay links visibles
+        console.log(`[INFO] No links found. Generating ${totalEpisodes} episodes from 1 for ${slug}`);
+        const generatedNumbers = [];
+        for (let i = 1; i <= totalEpisodes; i++) {
+          generatedNumbers.push(i);
+        }
+        allEpisodes = buildEpisodesFromNumbers(generatedNumbers, slug, animeId);
       }
     } else {
       // Fallback: scrapear episodios de la pagina actual
       console.log('[INFO] Scraping episodes from current page...');
       
       // Buscar episodios con selectores mas amplios
-      $('article.group\/item, .episode-card, article[data-episode]').each((index, element) => {
+      $('article.group\\/item, .episode-card, article[data-episode]').each((index, element) => {
         const $element = $(element);
         
         // Extraer numero de episodio con multiples selectores
@@ -489,6 +497,7 @@ async function getAnimeDetails(slug) {
         }
       }
     }
+
     // Ordenar episodios por número
     allEpisodes.sort((a, b) => {
       const numA = parseInt(a.number) || 0;
@@ -513,7 +522,7 @@ async function getAnimeDetails(slug) {
       malVotes: malVotes || '0',
       episodes: allEpisodes,
       totalEpisodes: allEpisodes.length,
-      episodeRanges: generateEpisodeRanges(allEpisodes.length),
+      episodeRanges: generateEpisodeRanges(allEpisodes),
       trailerUrl: trailerUrl || null
     };
     
@@ -581,16 +590,164 @@ async function getAnimeDetails(slug) {
 
 
 
-function generateEpisodeRanges(totalEpisodes) {
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractBalancedBlock(text, startIndex, openChar = '[', closeChar = ']') {
+  if (!text || startIndex < 0 || startIndex >= text.length) {
+    return null;
+  }
+
+  let cursor = startIndex;
+  if (text[cursor] !== openChar) {
+    cursor = text.indexOf(openChar, startIndex);
+    if (cursor === -1) {
+      return null;
+    }
+  }
+
+  let depth = 0;
+  let inSingle = false;
+  let inDouble = false;
+  let escaped = false;
+
+  for (let i = cursor; i < text.length; i++) {
+    const char = text[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (inSingle) {
+      if (char === '\'') {
+        inSingle = false;
+      }
+      continue;
+    }
+
+    if (inDouble) {
+      if (char === '"') {
+        inDouble = false;
+      }
+      continue;
+    }
+
+    if (char === '\'') {
+      inSingle = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inDouble = true;
+      continue;
+    }
+
+    if (char === openChar) {
+      depth++;
+    } else if (char === closeChar) {
+      depth--;
+      if (depth === 0) {
+        return text.slice(cursor, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractEpisodeNumbersFromSerializedData(scriptContent) {
+  if (!scriptContent || !scriptContent.includes('episodes:[')) {
+    return [];
+  }
+
+  const episodesIndex = scriptContent.indexOf('episodes:[');
+  const startBracketIndex = scriptContent.indexOf('[', episodesIndex);
+  const episodesBlock = extractBalancedBlock(scriptContent, startBracketIndex, '[', ']');
+
+  if (!episodesBlock) {
+    return [];
+  }
+
+  const numbers = [];
+  const numberRegex = /number\s*:\s*(\d+)/g;
+  let match = numberRegex.exec(episodesBlock);
+  while (match) {
+    numbers.push(parseInt(match[1], 10));
+    match = numberRegex.exec(episodesBlock);
+  }
+
+  return [...new Set(numbers)].sort((a, b) => a - b);
+}
+
+function extractEpisodeNumbersFromMediaLinks(html, slug) {
+  if (!html || !slug) {
+    return [];
+  }
+
+  const escapedSlug = escapeRegExp(slug);
+  const regex = new RegExp(`/media/${escapedSlug}/(\\d+)(?:$|[/?#"'\\s])`, 'g');
+  const numbers = [];
+
+  let match = regex.exec(html);
+  while (match) {
+    numbers.push(parseInt(match[1], 10));
+    match = regex.exec(html);
+  }
+
+  return [...new Set(numbers)].sort((a, b) => a - b);
+}
+
+function buildEpisodesFromNumbers(episodeNumbers, slug, animeId) {
+  if (!Array.isArray(episodeNumbers) || episodeNumbers.length === 0) {
+    return [];
+  }
+
+  const uniqueEpisodeNumbers = [...new Set(
+    episodeNumbers
+      .map(number => parseInt(number, 10))
+      .filter(number => Number.isInteger(number) && number >= 0)
+  )].sort((a, b) => a - b);
+
+  return uniqueEpisodeNumbers.map(number => ({
+    number: number.toString(),
+    title: `Episodio ${number}`,
+    screenshot: animeId ? `https://cdn.animeav1.com/screenshots/${animeId}/${number}.jpg` : null,
+    link: `https://animeav1.com/media/${slug}/${number}`,
+    slug: number.toString()
+  }));
+}
+
+function generateEpisodeRanges(episodes) {
+  const episodeNumbers = Array.isArray(episodes)
+    ? [...new Set(
+        episodes
+          .map(ep => parseInt(ep.number, 10))
+          .filter(num => Number.isInteger(num) && num >= 0)
+      )].sort((a, b) => a - b)
+    : [];
+
+  if (episodeNumbers.length === 0) {
+    return [];
+  }
+
   const ranges = [];
   const rangeSize = 50;
-  
-  for (let i = 1; i <= totalEpisodes; i += rangeSize) {
-    const end = Math.min(i + rangeSize - 1, totalEpisodes);
+  const minEpisode = episodeNumbers[0];
+  const maxEpisode = episodeNumbers[episodeNumbers.length - 1];
+
+  for (let i = minEpisode; i <= maxEpisode; i += rangeSize) {
+    const end = Math.min(i + rangeSize - 1, maxEpisode);
     ranges.push({
       label: `${i} - ${end}`,
       start: i,
-      end: end
+      end
     });
   }
   
