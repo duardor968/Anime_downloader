@@ -91,17 +91,47 @@ node server.js
 http://localhost:3000
 ```
 
-## Configuración de JDownloader
+## Configuracion
 
-**Necesario para ambas versiones:**
+La app incluye una pantalla de configuracion en:
 
-1. **Configurar JDownloader**
-   - Abrir JDownloader 2
-   - Ir a **Configuración** → **Configuración avanzada**
-   - Buscar `Deprecated Api` y habilitar la API local
-   - Configurar puerto a 3128
+```text
+http://localhost:3000/settings
+```
 
-2. **Configurar proxy** (si es necesario)
+Desde esa pantalla puedes definir:
+
+- Preferencia global de audio: `SUB` o `DUB`
+- Modo de conexion JDownloader:
+  - `API local`
+  - `My.JDownloader web`
+
+### Modo API local
+
+1. Abre JDownloader 2.
+2. Ve a **Configuracion** -> **Configuracion avanzada**.
+3. Busca `Deprecated Api` y habilita la API local.
+4. Define IP/puerto (por defecto `127.0.0.1:3128`) desde `/settings`.
+
+### Modo My.JDownloader web
+
+1. Configura tu cuenta de My.JDownloader en JDownloader 2.
+2. En `/settings`, selecciona `My.JDownloader web`.
+3. Completa la **Parte 1: Cuenta My.JDownloader**:
+   - URL base API (default: `https://api.jdownloader.org`)
+   - Email y password de My.JDownloader
+   - App key (default: `animehub-webui`)
+4. Pulsa **Validar cuenta**.
+5. Al validar, la app pobla automaticamente la **Parte 2: Dispositivo** y te permite elegir donde enviar las descargas.
+6. Guarda los cambios.
+
+Notas importantes:
+- Si cambias cualquier dato de la Parte 1, la seleccion de dispositivo se reinicia.
+- Si durante una descarga el dispositivo web se desconecta, la app reescanea dispositivos y pide seleccionar otro (si existe).
+
+> Seguridad: la password del modo web se guarda localmente en el archivo de configuracion de la aplicacion.
+
+### Configurar proxy (si es necesario)
 ```bash
 # Windows
 set HTTP_PROXY=http://proxy.empresa.com:8080
@@ -125,6 +155,14 @@ NO_PROXY=localhost,127.0.0.1
 # Puerto del servidor (opcional)
 PORT=3000
 ```
+
+### Archivo de configuracion persistente
+
+La configuracion se guarda fuera del binario SEA:
+
+- Windows: `%APPDATA%/AnimeHub/settings.json`
+- Linux: `$XDG_CONFIG_HOME/animehub/settings.json` o `~/.config/animehub/settings.json`
+- macOS: `~/Library/Application Support/AnimeHub/settings.json`
 
 ## Sistema de red híbrido
 
@@ -225,9 +263,15 @@ Notas de build:
 GET  /                    # Página principal
 GET  /search             # Búsqueda de animes
 GET  /media/:slug        # Detalles del anime
+GET  /settings           # Pantalla de configuracion
 POST /download           # Descarga masiva
 POST /download-episode   # Descarga individual
 GET  /api/search         # API de búsqueda
+GET  /api/settings       # Obtener configuracion
+PUT  /api/settings       # Guardar configuracion
+POST /api/settings/test-connection # Probar conexion JDownloader
+POST /api/settings/web/devices     # Validar cuenta web y listar dispositivos
+PUT  /api/settings/web/device       # Guardar dispositivo web seleccionado
 ```
 
 ## Solución de problemas
@@ -252,8 +296,11 @@ node test-simple-proxy.js
 ```
 
 ### JDownloader no conecta
-1. Asegurar que JDownloader esté ejecutándose
-2. Verificar que JDownloader está escuchando en el puerto 3128 (Si acabas de activar la API recuerda reiniciar JDownloader)
+1. Asegura que JDownloader este ejecutandose.
+2. Revisa en `/settings` que el modo seleccionado sea correcto (`API local` o `My.JDownloader web`).
+3. Usa el boton **Probar conexion** y revisa el mensaje devuelto.
+4. En modo local, verifica IP/puerto y que `Deprecated Api` este habilitada.
+5. En modo web, valida email/password y que exista al menos un dispositivo conectado.
 
 ## Licencia
 

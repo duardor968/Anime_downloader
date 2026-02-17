@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-07T05:59:50.275Z",
+  "generatedAt": "2026-02-16T22:33:30.829Z",
   "files": [
     "public/css/fontawesome.css",
     "public/css/fonts.css",
@@ -12,6 +12,7 @@
     "public/images/logo.svg",
     "public/js/anime.js",
     "public/js/index.js",
+    "public/js/settings.js",
     "public/webfonts/fa-brands-400.woff2",
     "public/webfonts/fa-regular-400.woff2",
     "public/webfonts/fa-solid-900.woff2",
@@ -23,6 +24,7 @@
     "views/partials/card-episode.ejs",
     "views/partials/footer.ejs",
     "views/partials/header.ejs",
-    "views/search.ejs"
+    "views/search.ejs",
+    "views/settings.ejs"
   ]
 }

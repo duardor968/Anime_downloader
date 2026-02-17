@@ -244,7 +244,15 @@
   .overlay-dim { z-index: 10; }
   .download-episode-btn { cursor: pointer; }
 
-  .placeholder-subs::placeholder { color: var(--color-subs); }
+  .placeholder-hint::placeholder {
+    color: rgba(142, 149, 178, 0.62);
+    font-style: italic;
+    opacity: 1;
+  }
+
+  .placeholder-hint:focus::placeholder {
+    color: rgba(142, 149, 178, 0.5);
+  }
 
   input[type="search"]::-webkit-search-cancel-button,
   input[type="search"]::-webkit-search-decoration {
@@ -544,3 +552,4 @@
     z-index: 0;
   }
 }
+

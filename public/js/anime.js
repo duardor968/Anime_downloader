@@ -188,8 +188,159 @@ function getSelectedAudioType() {
   return selected ? selected.value : null;
 }
 
-async function startDownload(episodes, audioType) {
+function ensureDeviceModal() {
+  let modal = document.getElementById('deviceSelectionModal');
+  if (modal) {
+    return modal;
+  }
+
+  modal = document.createElement('div');
+  modal.id = 'deviceSelectionModal';
+  modal.className = 'fixed inset-0 z-50 hidden';
+  modal.innerHTML = `
+    <div class="absolute inset-0 bg-black/70"></div>
+    <div class="relative z-10 flex min-h-full items-center justify-center p-4">
+      <div class="w-full max-w-md rounded-xl border border-line bg-soft p-5 shadow-2xl">
+        <h3 class="text-lg font-semibold text-lead">Seleccionar otro dispositivo</h3>
+        <p class="mt-2 text-sm text-subs" id="deviceModalMessage">El dispositivo actual se desconecto.</p>
+        <div class="mt-4 grid gap-2">
+          <label class="text-sm text-subs" for="deviceModalSelect">Dispositivo disponible</label>
+          <select id="deviceModalSelect" class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead focus:border-main focus:outline-none"></select>
+        </div>
+        <div class="mt-5 flex justify-end gap-3">
+          <button type="button" id="deviceModalCancel" class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button type="button" id="deviceModalConfirm" class="inline-flex items-center gap-2 px-4 py-2 bg-main text-fore rounded-lg hover:opacity-90 transition-opacity">
+            Usar dispositivo
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function requestDeviceSelection(devices, message) {
+  return new Promise((resolve) => {
+    const safeDevices = Array.isArray(devices) ? devices.filter(device => device && device.id) : [];
+    if (safeDevices.length === 0) {
+      resolve(null);
+      return;
+    }
+
+    const modal = ensureDeviceModal();
+    const messageNode = document.getElementById('deviceModalMessage');
+    const select = document.getElementById('deviceModalSelect');
+    const cancelBtn = document.getElementById('deviceModalCancel');
+    const confirmBtn = document.getElementById('deviceModalConfirm');
+
+    if (!select || !cancelBtn || !confirmBtn) {
+      resolve(null);
+      return;
+    }
+
+    select.innerHTML = '';
+    safeDevices.forEach((device) => {
+      const option = document.createElement('option');
+      option.value = device.id;
+      option.textContent = `${device.name || device.id}${device.status ? ` - ${device.status}` : ''}`;
+      select.appendChild(option);
+    });
+
+    if (messageNode) {
+      messageNode.textContent = message || 'El dispositivo actual se desconecto. Selecciona otro para continuar.';
+    }
+
+    const finish = (value) => {
+      modal.classList.add('hidden');
+      cancelBtn.removeEventListener('click', onCancel);
+      confirmBtn.removeEventListener('click', onConfirm);
+      resolve(value);
+    };
+
+    const onCancel = () => finish(null);
+    const onConfirm = () => finish(select.value || null);
+
+    cancelBtn.addEventListener('click', onCancel);
+    confirmBtn.addEventListener('click', onConfirm);
+    modal.classList.remove('hidden');
+  });
+}
+
+async function saveWebDeviceSelection(deviceId) {
+  const response = await fetch('/api/settings/web/device', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deviceId })
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.success === false) {
+    throw new Error(payload.message || 'No se pudo seleccionar el dispositivo.');
+  }
+
+  return payload;
+}
+
+function parseSsePayloads(buffer) {
+  const payloads = [];
+  let cursor = buffer;
+  let cutAt = cursor.indexOf('\n\n');
+
+  while (cutAt !== -1) {
+    const chunk = cursor.slice(0, cutAt);
+    cursor = cursor.slice(cutAt + 2);
+    cutAt = cursor.indexOf('\n\n');
+
+    const dataLine = chunk
+      .split('\n')
+      .map(line => line.trim())
+      .find(line => line.startsWith('data:'));
+
+    if (!dataLine) continue;
+
+    try {
+      payloads.push(JSON.parse(dataLine.slice(5).trim()));
+    } catch (error) {
+      console.warn('Error parsing SSE data:', error);
+    }
+  }
+
+  return { payloads, rest: cursor };
+}
+
+async function handleDeviceDisconnected(payload) {
+  const devices = Array.isArray(payload.devices) ? payload.devices : [];
+
+  if (!payload.requiresDeviceSelection || devices.length === 0) {
+    showToast(payload.msg || 'El dispositivo se desconecto y no hay otro disponible.', true);
+    return false;
+  }
+
+  const selectedDeviceId = await requestDeviceSelection(devices, payload.msg);
+  if (!selectedDeviceId) {
+    showToast('Descarga cancelada por falta de dispositivo.', true);
+    return false;
+  }
+
+  try {
+    showToast('Cambiando dispositivo...', false);
+    const saveResult = await saveWebDeviceSelection(selectedDeviceId);
+    showToast(saveResult.message || 'Dispositivo actualizado. Reintentando descarga...', false);
+    return true;
+  } catch (error) {
+    console.error('Error selecting fallback device:', error);
+    showToast(error.message || 'No se pudo guardar el nuevo dispositivo.', true);
+    return false;
+  }
+}
+
+async function startDownload(episodes, audioType, retryCount = 0) {
   const animeName = window.animeData?.title || 'Anime';
+  let shouldRetry = false;
 
   try {
     showToast('Iniciando descarga...', false);
@@ -200,34 +351,62 @@ async function startDownload(episodes, audioType) {
       body: JSON.stringify({ animeName, episodes, audioType })
     });
 
-    if (!res.ok) {
+    if (!res.ok || !res.body) {
       throw new Error('Error en la respuesta del servidor');
     }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
+    let pending = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const lines = decoder.decode(value).split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data:')) {
-          try {
-            const { msg, done: finished } = JSON.parse(line.slice(5).trim());
-            showToast(msg, false);
-            if (finished) {
-              setTimeout(hideToast, 2000);
-            }
-          } catch (e) {
-            console.warn('Error parsing SSE data:', e);
+
+      pending += decoder.decode(value, { stream: true });
+      const parsed = parseSsePayloads(pending);
+      pending = parsed.rest;
+
+      for (const payload of parsed.payloads) {
+        const isDeviceError = payload
+          && payload.code === 'MYJD_DEVICE_OFFLINE'
+          && payload.requiresDeviceSelection;
+
+        if (isDeviceError) {
+          const canRetry = retryCount < 2;
+          if (!canRetry) {
+            showToast('No se pudo recuperar la descarga: demasiados reintentos de dispositivo.', true);
+            await reader.cancel();
+            return;
           }
+
+          const deviceUpdated = await handleDeviceDisconnected(payload);
+          if (deviceUpdated) {
+            shouldRetry = true;
+            await reader.cancel();
+          }
+          break;
+        }
+
+        const message = payload && payload.msg ? payload.msg : 'Proceso de descarga en curso.';
+        const isError = Boolean(payload && payload.error);
+        showToast(message, isError);
+
+        if (payload && payload.done) {
+          setTimeout(hideToast, 2000);
         }
       }
+
+      if (shouldRetry) break;
     }
   } catch (error) {
     console.error('Error en descarga:', error);
     showToast('Error al procesar la descarga', true);
+    return;
+  }
+
+  if (shouldRetry) {
+    await startDownload(episodes, audioType, retryCount + 1);
   }
 }
 
@@ -267,19 +446,37 @@ document.addEventListener('click', function (e) {
     btn.style.pointerEvents = 'none';
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-    fetch('/download-episode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ episodeTitle: fullEpisodeTitle, episodeLink, audioType })
-    })
-      .then(response => response.json())
-      .then(data => {
-        showToast(data.message, !data.success);
-      })
-      .catch(error => {
+    const requestEpisodeDownload = async (retryCount = 0) => {
+      try {
+        const response = await fetch('/download-episode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ episodeTitle: fullEpisodeTitle, episodeLink, audioType })
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (data.success) {
+          showToast(data.message || 'Descarga enviada.', false);
+          return;
+        }
+
+        const isDeviceError = data.code === 'MYJD_DEVICE_OFFLINE' && data.requiresDeviceSelection;
+        if (isDeviceError && retryCount < 2) {
+          const deviceUpdated = await handleDeviceDisconnected(data);
+          if (deviceUpdated) {
+            await requestEpisodeDownload(retryCount + 1);
+            return;
+          }
+        }
+
+        showToast(data.message || 'Error al procesar la descarga', true);
+      } catch (error) {
         console.error('Error:', error);
         showToast('Error al procesar la descarga', true);
-      })
+      }
+    };
+
+    requestEpisodeDownload()
       .finally(() => {
         btn.style.pointerEvents = 'auto';
         btn.innerHTML = originalContent;

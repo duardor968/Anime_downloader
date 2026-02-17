@@ -100,11 +100,11 @@
               <div class="flex-1"></div>
               <div class="audio-toggle" role="radiogroup" aria-label="Audio">
                 <label class="audio-choice">
-                  <input type="radio" name="audioType" value="SUB" checked>
+                  <input type="radio" name="audioType" value="SUB" <%= defaultAudioPreference !== 'DUB' ? 'checked' : '' %>>
                   <span class="audio-option">SUB</span>
                 </label>
                 <label class="audio-choice">
-                  <input type="radio" name="audioType" value="DUB">
+                  <input type="radio" name="audioType" value="DUB" <%= defaultAudioPreference === 'DUB' ? 'checked' : '' %>>
                   <span class="audio-option">DUB</span>
                 </label>
               </div>
@@ -147,7 +147,7 @@
             <button type="button" class="btn btn-sm btn-soft tooltip-top p-0" aria-label="Buscar" id="searchBtn">
               <span class="ic-search-md text-lg" aria-hidden="true"></span>
             </button>
-            <input type="text" id="episodeSearch" placeholder="Buscar episodio..." class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text placeholder-subs focus:border-main focus:outline-none hidden" style="width: 150px;">
+            <input type="text" id="episodeSearch" placeholder="Buscar episodio..." class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-text placeholder-hint focus:border-main focus:outline-none hidden" style="width: 150px;">
             
             <button class="btn btn-sm btn-soft tooltip-top p-0" aria-label="Ordenar" type="button">
               <span class="ic-arrows-up-down text-lg"></span>
@@ -245,6 +245,7 @@
       slug: '<%= anime.slug %>',
       animeId: '<%= anime.animeId || '' %>',
       totalEpisodes: <%= anime.totalEpisodes %>,
+      defaultAudioPreference: '<%= defaultAudioPreference || "SUB" %>',
       episodes: <%- JSON.stringify(anime.episodes) %>
     };
     
@@ -268,3 +269,4 @@
   <script src="/js/anime.js"></script>
 </body>
 </html>
+

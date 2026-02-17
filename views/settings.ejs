@@ -1,0 +1,199 @@
+<%- include('partials/header', {
+  pageTitle: 'Configuracion - AnimeHub',
+  htmlClass: 'dark',
+  bodyClass: 'bg-body text-text font-body min-h-screen flex flex-col'
+}) %>
+
+<main class="py-10">
+  <div class="container max-w-4xl space-y-6">
+    <section class="section-shell p-6 grid gap-6">
+      <header class="grid gap-1">
+        <h1 class="text-2xl font-bold text-lead">Configuracion</h1>
+        <p class="text-sm text-subs">Define la preferencia global de audio y la conexion con JDownloader.</p>
+      </header>
+
+      <div class="hidden rounded-lg border p-4 text-sm" id="settingsStatus"></div>
+
+      <form class="grid gap-8" id="settingsForm">
+        <section class="grid gap-3">
+          <h2 class="text-lg font-semibold text-lead">Audio predeterminado</h2>
+          <div class="audio-toggle" role="radiogroup" aria-label="Audio predeterminado">
+            <label class="audio-choice">
+              <input type="radio" name="audioPreference" value="SUB" <%= settings.audioPreference !== 'DUB' ? 'checked' : '' %>>
+              <span class="audio-option">SUB</span>
+            </label>
+            <label class="audio-choice">
+              <input type="radio" name="audioPreference" value="DUB" <%= settings.audioPreference === 'DUB' ? 'checked' : '' %>>
+              <span class="audio-option">DUB</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="grid gap-4">
+          <h2 class="text-lg font-semibold text-lead">JDownloader</h2>
+          <div class="audio-toggle" role="radiogroup" aria-label="Modo JDownloader">
+            <label class="audio-choice">
+              <input type="radio" name="jdownloaderMode" value="local" <%= settings.jdownloader.mode !== 'web' ? 'checked' : '' %>>
+              <span class="audio-option">API local</span>
+            </label>
+            <label class="audio-choice">
+              <input type="radio" name="jdownloaderMode" value="web" <%= settings.jdownloader.mode === 'web' ? 'checked' : '' %>>
+              <span class="audio-option">My.JDownloader web</span>
+            </label>
+          </div>
+
+          <div class="grid gap-4" id="localSettings">
+            <div class="grid gap-2">
+              <label class="text-sm text-subs" for="localIp">IP local</label>
+              <input
+                class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                id="localIp"
+                type="text"
+                autocomplete="off"
+                value="<%= settings.jdownloader.local.ip %>"
+                placeholder="127.0.0.1">
+            </div>
+            <div class="grid gap-2">
+              <label class="text-sm text-subs" for="localPort">Puerto local</label>
+              <input
+                class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                id="localPort"
+                type="number"
+                min="1"
+                max="65535"
+                value="<%= settings.jdownloader.local.port %>"
+                placeholder="3128">
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button
+                class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors"
+                id="testConnectionBtn"
+                type="button">
+                <i class="fas fa-plug"></i>
+                <span>Probar conexion local</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid gap-6" id="webSettings">
+            <section class="grid gap-4 border border-line rounded-xl p-4 bg-soft/50">
+              <div class="grid gap-1">
+                <h3 class="text-base font-semibold text-lead">1. Cuenta My.JDownloader</h3>
+                <p class="text-xs text-subs">Primero valida la cuenta. Si cambias estos datos, la seleccion de dispositivo se reinicia.</p>
+              </div>
+
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="webBaseUrl">URL base API</label>
+                <input
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                  id="webBaseUrl"
+                  type="url"
+                  autocomplete="off"
+                  value="<%= settings.jdownloader.web.baseUrl %>"
+                  placeholder="https://api.jdownloader.org">
+              </div>
+
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="webEmail">Email My.JDownloader</label>
+                <input
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                  id="webEmail"
+                  type="email"
+                  autocomplete="username"
+                  value="<%= settings.jdownloader.web.email %>"
+                  placeholder="usuario@correo.com">
+              </div>
+
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="webPassword">Password My.JDownloader</label>
+                <input
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                  id="webPassword"
+                  type="password"
+                  autocomplete="current-password"
+                  value="<%= settings.jdownloader.web.password %>"
+                  placeholder="Tu password de My.JDownloader">
+                <p class="text-xs text-subs">Este password se guarda localmente en el archivo de configuracion.</p>
+              </div>
+
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="webAppKey">App key</label>
+                <input
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                  id="webAppKey"
+                  type="text"
+                  autocomplete="off"
+                  value="<%= settings.jdownloader.web.appKey %>"
+                  placeholder="animehub-webui">
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <button
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors"
+                  id="validateWebAccountBtn"
+                  type="button">
+                  <i class="fas fa-user-check"></i>
+                  <span>Validar cuenta</span>
+                </button>
+                <p class="text-xs text-subs" id="webAccountStatus">Cuenta pendiente de validar.</p>
+              </div>
+            </section>
+
+            <section class="grid gap-4 border border-line rounded-xl p-4 bg-soft/40" id="webDeviceSection">
+              <div class="grid gap-1">
+                <h3 class="text-base font-semibold text-lead">2. Dispositivo de descarga</h3>
+                <p class="text-xs text-subs">Se habilita cuando la cuenta quede validada.</p>
+              </div>
+
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="webDeviceId">Dispositivo</label>
+                <select
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead focus:border-main focus:outline-none"
+                  id="webDeviceId">
+                  <% if (settings.jdownloader.web.deviceId) { %>
+                    <option value="<%= settings.jdownloader.web.deviceId %>" selected>
+                      <%= settings.jdownloader.web.deviceName || settings.jdownloader.web.deviceId %>
+                    </option>
+                  <% } else { %>
+                    <option value="" selected>Valida la cuenta para listar dispositivos</option>
+                  <% } %>
+                </select>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <button
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors"
+                  id="refreshWebDevicesBtn"
+                  type="button">
+                  <i class="fas fa-rotate"></i>
+                  <span>Recargar dispositivos</span>
+                </button>
+                <p class="text-xs text-subs" id="webDeviceStatus">Sin dispositivos cargados.</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <div class="flex flex-wrap gap-3">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 bg-main text-fore font-medium rounded-lg hover:opacity-90 transition-opacity"
+            id="saveSettingsBtn"
+            type="submit">
+            <i class="fas fa-save"></i>
+            <span>Guardar configuracion</span>
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
+
+<script>
+  window.initialSettings = <%- JSON.stringify(settings) %>;
+</script>
+<script src="/js/settings.js"></script>
+</body>
+</html>
+
