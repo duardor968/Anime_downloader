@@ -8,11 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const webAccountStatus = document.getElementById('webAccountStatus');
   const webDeviceStatus = document.getElementById('webDeviceStatus');
   const webDeviceSection = document.getElementById('webDeviceSection');
+  const webDeviceTrigger = document.getElementById('webDeviceTrigger');
+  const webDeviceMenu = document.getElementById('webDeviceMenu');
   const localSettings = document.getElementById('localSettings');
   const webSettings = document.getElementById('webSettings');
 
+  const SUPPORTED_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload', '1fichier'];
+  const DEFAULT_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload'];
+
   const inputs = {
     audioPreference: () => document.querySelector('input[name="audioPreference"]:checked'),
+    downloadServers: () => Array.from(document.querySelectorAll('input[name="downloadServers"]:checked'))
+      .map(input => input.value),
     mode: () => document.querySelector('input[name="jdownloaderMode"]:checked'),
     localIp: document.getElementById('localIp'),
     localPort: document.getElementById('localPort'),
@@ -32,15 +39,118 @@ document.addEventListener('DOMContentLoaded', () => {
     return selected ? selected.value : 'local';
   }
 
+  function normalizeDownloadServers(serverIds) {
+    const source = Array.isArray(serverIds) ? serverIds : [];
+    const normalized = source
+      .map(serverId => String(serverId || '').trim().toLowerCase())
+      .filter(serverId => SUPPORTED_DOWNLOAD_SERVERS.includes(serverId));
+
+    const unique = [...new Set(normalized)];
+    if (unique.length === 0) {
+      return [...DEFAULT_DOWNLOAD_SERVERS];
+    }
+
+    return SUPPORTED_DOWNLOAD_SERVERS.filter(serverId => unique.includes(serverId));
+  }
+
+  function applyDownloadServerSelection(serverIds) {
+    const normalized = normalizeDownloadServers(serverIds);
+    document.querySelectorAll('input[name="downloadServers"]').forEach((checkbox) => {
+      checkbox.checked = normalized.includes(checkbox.value);
+    });
+  }
+
+  function closeWebDeviceMenu() {
+    if (!webDeviceMenu) return;
+    webDeviceMenu.classList.add('hidden');
+    if (webDeviceTrigger) {
+      webDeviceTrigger.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function syncWebDeviceTriggerLabel() {
+    if (!webDeviceTrigger || !inputs.webDeviceId) return;
+    const selected = inputs.webDeviceId.options[inputs.webDeviceId.selectedIndex];
+    webDeviceTrigger.textContent = selected ? selected.textContent : 'Selecciona un dispositivo';
+  }
+
+  function rebuildWebDeviceMenu() {
+    if (!webDeviceMenu || !inputs.webDeviceId) return;
+
+    webDeviceMenu.innerHTML = '';
+    const options = Array.from(inputs.webDeviceId.options);
+
+    options.forEach((option) => {
+      const menuOption = document.createElement('button');
+      menuOption.type = 'button';
+      menuOption.className = 'select-option';
+      menuOption.dataset.value = option.value;
+      menuOption.textContent = option.textContent;
+
+      if (option.disabled) {
+        menuOption.disabled = true;
+        menuOption.classList.add('opacity-60', 'cursor-not-allowed');
+      }
+
+      if (option.selected) {
+        menuOption.classList.add('text-lead');
+      }
+
+      menuOption.addEventListener('click', () => {
+        if (inputs.webDeviceId.disabled || option.disabled) return;
+        inputs.webDeviceId.value = option.value;
+        inputs.webDeviceId.dispatchEvent(new Event('change'));
+        closeWebDeviceMenu();
+      });
+
+      webDeviceMenu.appendChild(menuOption);
+    });
+
+    syncWebDeviceTriggerLabel();
+  }
+
+  function initWebDeviceCustomSelect() {
+    if (!webDeviceTrigger || !webDeviceMenu || !inputs.webDeviceId) return;
+
+    webDeviceTrigger.setAttribute('aria-expanded', 'false');
+
+    webDeviceTrigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (webDeviceTrigger.disabled || inputs.webDeviceId.disabled) return;
+
+      const shouldOpen = webDeviceMenu.classList.contains('hidden');
+      if (shouldOpen) {
+        webDeviceMenu.classList.remove('hidden');
+        webDeviceTrigger.setAttribute('aria-expanded', 'true');
+      } else {
+        closeWebDeviceMenu();
+      }
+    });
+
+    webDeviceMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    inputs.webDeviceId.addEventListener('change', () => {
+      syncWebDeviceTriggerLabel();
+      rebuildWebDeviceMenu();
+    });
+
+    document.addEventListener('click', closeWebDeviceMenu);
+    rebuildWebDeviceMenu();
+  }
+
   function setBusy(isBusy) {
     busyCount = Math.max(0, busyCount + (isBusy ? 1 : -1));
     const disabled = busyCount > 0;
 
     [testConnectionBtn, saveSettingsBtn, validateWebAccountBtn, refreshWebDevicesBtn].forEach((button) => {
       if (!button) return;
-      button.disabled = disabled;
-      button.classList.toggle('opacity-60', disabled);
-      button.classList.toggle('cursor-not-allowed', disabled);
+      const sectionDisabled = button.dataset.sectionDisabled === 'true';
+      const finalDisabled = disabled || sectionDisabled;
+      button.disabled = finalDisabled;
+      button.classList.toggle('opacity-60', finalDisabled);
+      button.classList.toggle('cursor-not-allowed', finalDisabled);
     });
   }
 
@@ -81,11 +191,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputs.webDeviceId) {
       inputs.webDeviceId.disabled = !enabled;
     }
+    if (webDeviceTrigger) {
+      webDeviceTrigger.disabled = !enabled;
+      webDeviceTrigger.classList.toggle('opacity-60', !enabled);
+      webDeviceTrigger.classList.toggle('cursor-not-allowed', !enabled);
+      if (!enabled) {
+        closeWebDeviceMenu();
+      }
+    }
 
     if (refreshWebDevicesBtn) {
-      refreshWebDevicesBtn.disabled = !enabled;
-      refreshWebDevicesBtn.classList.toggle('opacity-60', !enabled);
-      refreshWebDevicesBtn.classList.toggle('cursor-not-allowed', !enabled);
+      const refreshDisabled = !enabled || busyCount > 0;
+      refreshWebDevicesBtn.dataset.sectionDisabled = String(!enabled);
+      refreshWebDevicesBtn.disabled = refreshDisabled;
+      refreshWebDevicesBtn.classList.toggle('opacity-60', refreshDisabled);
+      refreshWebDevicesBtn.classList.toggle('cursor-not-allowed', refreshDisabled);
     }
   }
 
@@ -119,11 +239,13 @@ document.addEventListener('DOMContentLoaded', () => {
       inputs.webDeviceId.innerHTML = '';
       const option = document.createElement('option');
       option.value = '';
+      option.dataset.deviceName = '';
       option.textContent = reason || 'Valida la cuenta para listar dispositivos';
       option.selected = true;
       inputs.webDeviceId.appendChild(option);
     }
 
+    rebuildWebDeviceMenu();
     setWebDeviceStatus('Pendiente de validar cuenta para poblar dispositivos.');
   }
 
@@ -137,9 +259,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (normalized.length === 0) {
       const option = document.createElement('option');
       option.value = '';
+      option.dataset.deviceName = '';
       option.textContent = 'No hay dispositivos disponibles';
       option.selected = true;
       select.appendChild(option);
+      rebuildWebDeviceMenu();
       return;
     }
 
@@ -162,6 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!select.value && select.options.length > 0) {
       select.options[0].selected = true;
     }
+
+    rebuildWebDeviceMenu();
   }
 
   function setCheckedRadio(name, value) {
@@ -187,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!settings || !settings.jdownloader) return;
 
     setCheckedRadio('audioPreference', settings.audioPreference || 'SUB');
+    applyDownloadServerSelection(settings.downloadServers);
     setCheckedRadio('jdownloaderMode', settings.jdownloader.mode || 'local');
 
     inputs.localIp.value = settings.jdownloader.local?.ip || '127.0.0.1';
@@ -231,9 +358,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function collectSettingsFromForm() {
     const audio = inputs.audioPreference();
     const mode = getSelectedMode();
-    const selectedOption = inputs.webDeviceId.options[inputs.webDeviceId.selectedIndex];
+    const selectedDownloadServers = normalizeDownloadServers(inputs.downloadServers());
+    const selectedDeviceId = inputs.webDeviceId.value;
+    const selectedOption = selectedDeviceId
+      ? inputs.webDeviceId.options[inputs.webDeviceId.selectedIndex]
+      : null;
 
     return {
+      downloadServers: selectedDownloadServers,
       audioPreference: audio ? audio.value : 'SUB',
       jdownloader: {
         mode,
@@ -243,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         web: {
           ...collectWebAccountFromForm(),
-          deviceId: inputs.webDeviceId.value,
+          deviceId: selectedDeviceId,
           deviceName: selectedOption ? (selectedOption.dataset.deviceName || selectedOption.textContent.trim()) : ''
         }
       }
@@ -351,6 +483,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const settings = collectSettingsFromForm();
     const mode = getSelectedMode();
 
+    if (!Array.isArray(settings.downloadServers) || settings.downloadServers.length === 0) {
+      showStatus('error', 'Debes seleccionar al menos un servidor de descarga.');
+      return;
+    }
+
     if (mode === 'web') {
       const fingerprint = getWebAccountFingerprint();
       if (!webAccountValidated || fingerprint !== validatedWebAccountFingerprint) {
@@ -400,6 +537,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function ensureAtLeastOneDownloadServer(changedInput) {
+    const selected = inputs.downloadServers();
+    if (selected.length > 0) {
+      return true;
+    }
+
+    if (changedInput) {
+      changedInput.checked = true;
+    }
+
+    showStatus('error', 'Debes mantener al menos un servidor de descarga seleccionado.');
+    return false;
+  }
+
   document.querySelectorAll('input[name="jdownloaderMode"]').forEach(input => {
     input.addEventListener('change', toggleModePanels);
   });
@@ -407,6 +558,10 @@ document.addEventListener('DOMContentLoaded', () => {
   [inputs.webBaseUrl, inputs.webEmail, inputs.webPassword, inputs.webAppKey].forEach((input) => {
     if (!input) return;
     input.addEventListener('input', handleWebAccountFieldMutation);
+  });
+
+  document.querySelectorAll('input[name="downloadServers"]').forEach((input) => {
+    input.addEventListener('change', () => ensureAtLeastOneDownloadServer(input));
   });
 
   if (testConnectionBtn) {
@@ -425,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', saveSettings);
   }
 
+  initWebDeviceCustomSelect();
   applySettings(window.initialSettings || {});
   toggleModePanels();
 });

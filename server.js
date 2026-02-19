@@ -544,6 +544,7 @@ app.post('/download', async (req, res) => {
   const { animeName, episodes, audioType } = req.body;
   const settings = settingsStore.getSettings();
   const preferredAudioType = getRequestedAudioType(audioType, settings.audioPreference);
+  const allowedServers = Array.isArray(settings.downloadServers) ? settings.downloadServers : undefined;
   const safeEpisodes = Array.isArray(episodes) ? episodes : [];
 
   // SSE headers
@@ -569,7 +570,7 @@ app.post('/download', async (req, res) => {
       if (!ep || !ep.link) continue;
       res.write(`data: {"msg":"Extrayendo enlaces ${i + 1}/${total} (${preferredAudioType})","done":false}\n\n`);
 
-      const links = await getEpisodeDownloadLinks(ep.link, preferredAudioType);
+      const links = await getEpisodeDownloadLinks(ep.link, preferredAudioType, allowedServers);
       allLinks.push(...links);
     }
 
@@ -599,10 +600,11 @@ app.post('/download-episode', async (req, res) => {
   try {
     const settings = settingsStore.getSettings();
     const preferredAudioType = getRequestedAudioType(audioType, settings.audioPreference);
+    const allowedServers = Array.isArray(settings.downloadServers) ? settings.downloadServers : undefined;
     const jdownloader = JDownloaderManager.fromSettingsStore(settingsStore);
 
     // Extraer enlaces del episodio
-    const links = await getEpisodeDownloadLinks(episodeLink, preferredAudioType);
+    const links = await getEpisodeDownloadLinks(episodeLink, preferredAudioType, allowedServers);
     
     if (links.length === 0) {
       return res.json({ success: false, message: 'No se encontraron enlaces de descarga' });

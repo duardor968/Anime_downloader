@@ -102,9 +102,16 @@ http://localhost:3000/settings
 Desde esa pantalla puedes definir:
 
 - Preferencia global de audio: `SUB` o `DUB`
+- Servidores de descarga permitidos:
+  - `Mega`
+  - `Pixeldrain`
+  - `MP4Upload`
+  - `1Fichier`
 - Modo de conexion JDownloader:
   - `API local`
   - `My.JDownloader web`
+
+> Nota: por compatibilidad, la configuracion inicial mantiene activos `Mega`, `Pixeldrain` y `MP4Upload`. Puedes habilitar `1Fichier` cuando lo necesites.
 
 ### Modo API local
 

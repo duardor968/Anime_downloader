@@ -29,6 +29,50 @@
           </div>
         </section>
 
+        <section class="grid gap-3">
+          <h2 class="text-lg font-semibold text-lead">Servidores de descarga</h2>
+          <p class="text-xs text-subs">Selecciona los servidores que quieres extraer cuando el episodio los tenga disponibles.</p>
+          <div class="grid gap-2 sm:grid-cols-2" id="downloadServersGroup">
+            <label class="inline-flex items-center gap-2 bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead hover:border-main transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                name="downloadServers"
+                value="mega"
+                class="accent-main"
+                <%= settings.downloadServers && settings.downloadServers.includes('mega') ? 'checked' : '' %>>
+              <span>Mega</span>
+            </label>
+            <label class="inline-flex items-center gap-2 bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead hover:border-main transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                name="downloadServers"
+                value="pixeldrain"
+                class="accent-main"
+                <%= settings.downloadServers && settings.downloadServers.includes('pixeldrain') ? 'checked' : '' %>>
+              <span>Pixeldrain</span>
+            </label>
+            <label class="inline-flex items-center gap-2 bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead hover:border-main transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                name="downloadServers"
+                value="mp4upload"
+                class="accent-main"
+                <%= settings.downloadServers && settings.downloadServers.includes('mp4upload') ? 'checked' : '' %>>
+              <span>MP4Upload</span>
+            </label>
+            <label class="inline-flex items-center gap-2 bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead hover:border-main transition-colors cursor-pointer">
+              <input
+                type="checkbox"
+                name="downloadServers"
+                value="1fichier"
+                class="accent-main"
+                <%= settings.downloadServers && settings.downloadServers.includes('1fichier') ? 'checked' : '' %>>
+              <span>1Fichier</span>
+            </label>
+          </div>
+          <p class="text-xs text-subs">Debe quedar al menos un servidor seleccionado.</p>
+        </section>
+
         <section class="grid gap-4">
           <h2 class="text-lg font-semibold text-lead">JDownloader</h2>
           <div class="audio-toggle" role="radiogroup" aria-label="Modo JDownloader">
@@ -147,17 +191,35 @@
 
               <div class="grid gap-2">
                 <label class="text-sm text-subs" for="webDeviceId">Dispositivo</label>
-                <select
-                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead focus:border-main focus:outline-none"
-                  id="webDeviceId">
-                  <% if (settings.jdownloader.web.deviceId) { %>
-                    <option value="<%= settings.jdownloader.web.deviceId %>" selected>
+                <div class="select-shell w-full z-40" data-settings-select>
+                  <select class="select-field sr-only" id="webDeviceId">
+                    <% if (settings.jdownloader.web.deviceId) { %>
+                      <option value="<%= settings.jdownloader.web.deviceId %>" selected>
+                        <%= settings.jdownloader.web.deviceName || settings.jdownloader.web.deviceId %>
+                      </option>
+                    <% } else { %>
+                      <option value="" selected>Valida la cuenta para listar dispositivos</option>
+                    <% } %>
+                  </select>
+                  <button type="button" class="select-button" id="webDeviceTrigger" data-select-trigger>
+                    <% if (settings.jdownloader.web.deviceId) { %>
                       <%= settings.jdownloader.web.deviceName || settings.jdownloader.web.deviceId %>
-                    </option>
-                  <% } else { %>
-                    <option value="" selected>Valida la cuenta para listar dispositivos</option>
-                  <% } %>
-                </select>
+                    <% } else { %>
+                      Valida la cuenta para listar dispositivos
+                    <% } %>
+                  </button>
+                  <div class="select-menu hidden" id="webDeviceMenu" data-select-menu>
+                    <% if (settings.jdownloader.web.deviceId) { %>
+                      <button class="select-option" type="button" data-value="<%= settings.jdownloader.web.deviceId %>">
+                        <%= settings.jdownloader.web.deviceName || settings.jdownloader.web.deviceId %>
+                      </button>
+                    <% } else { %>
+                      <button class="select-option" type="button" data-value="">
+                        Valida la cuenta para listar dispositivos
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
               </div>
 
               <div class="flex flex-wrap items-center gap-3">

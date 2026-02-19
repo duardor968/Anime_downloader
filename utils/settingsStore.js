@@ -2,7 +2,11 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+const SUPPORTED_DOWNLOAD_SERVERS = Object.freeze(['mega', 'pixeldrain', 'mp4upload', '1fichier']);
+const DEFAULT_DOWNLOAD_SERVERS = Object.freeze(['mega', 'pixeldrain', 'mp4upload']);
+
 const DEFAULT_SETTINGS = Object.freeze({
+  downloadServers: [...DEFAULT_DOWNLOAD_SERVERS],
   audioPreference: 'SUB',
   jdownloader: {
     mode: 'local',
@@ -32,6 +36,54 @@ function ensureObject(value) {
 function normalizeAudioPreference(value) {
   const normalized = String(value || '').trim().toUpperCase();
   return normalized === 'DUB' ? 'DUB' : 'SUB';
+}
+
+function normalizeDownloadServer(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (!text) return '';
+
+  if (text === 'mega' || text === 'mega.nz' || text.includes('mega')) {
+    return 'mega';
+  }
+
+  if (text === 'pixeldrain' || text === 'pdrain' || text.includes('pixeldrain') || text.includes('pdrain')) {
+    return 'pixeldrain';
+  }
+
+  if (text === 'mp4upload' || text.includes('mp4upload')) {
+    return 'mp4upload';
+  }
+
+  if (
+    text === '1fichier'
+    || text === '1ficher'
+    || text === '1fichier.com'
+    || text === 'onefichier'
+    || text === 'onefichier.com'
+    || text.includes('1fichier')
+    || text.includes('1ficher')
+    || text.includes('onefichier')
+  ) {
+    return '1fichier';
+  }
+
+  return '';
+}
+
+function normalizeDownloadServers(value) {
+  const source = Array.isArray(value) ? value : [];
+  const mapped = source
+    .map(normalizeDownloadServer)
+    .filter(Boolean);
+
+  const unique = [...new Set(mapped)];
+  const ordered = SUPPORTED_DOWNLOAD_SERVERS.filter((server) => unique.includes(server));
+
+  if (ordered.length === 0) {
+    return [...DEFAULT_DOWNLOAD_SERVERS];
+  }
+
+  return ordered;
 }
 
 function normalizeMode(value) {
@@ -116,6 +168,10 @@ function mergeSettings(current, patch) {
     base.audioPreference = incoming.audioPreference;
   }
 
+  if (Object.prototype.hasOwnProperty.call(incoming, 'downloadServers')) {
+    base.downloadServers = incoming.downloadServers;
+  }
+
   const incomingJd = ensureObject(incoming.jdownloader);
   base.jdownloader = ensureObject(base.jdownloader);
 
@@ -164,6 +220,7 @@ function normalizeSettings(value) {
   const web = ensureObject(jdownloader.web);
 
   return {
+    downloadServers: normalizeDownloadServers(merged.downloadServers),
     audioPreference: normalizeAudioPreference(merged.audioPreference),
     jdownloader: {
       mode: normalizeMode(jdownloader.mode),
@@ -254,6 +311,8 @@ function createSettingsStore(options = {}) {
 
 module.exports = {
   DEFAULT_SETTINGS: getDefaultSettings(),
+  SUPPORTED_DOWNLOAD_SERVERS: [...SUPPORTED_DOWNLOAD_SERVERS],
+  DEFAULT_DOWNLOAD_SERVERS: [...DEFAULT_DOWNLOAD_SERVERS],
   getDefaultSettings,
   getDefaultSettingsPath,
   mergeSettings,
