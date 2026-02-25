@@ -171,19 +171,23 @@
           </div>
           
           <!-- Bulk Actions -->
-          <div class="sticky bottom-8 bg-soft border border-line rounded-lg p-4 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg z-50" id="bulkActions">
-            <div class="text-lead font-medium">
-              <span id="selectedCount">0</span> episodios seleccionados
-            </div>
-            <div class="flex gap-3">
-              <button class="inline-flex items-center gap-2 px-4 py-2 bg-main text-fore font-medium rounded-lg hover:opacity-90 transition-opacity" id="downloadSelectedBtn">
-                <i class="fas fa-download"></i>
-                <span>Descargar Seleccionados</span>
-              </button>
-              <button class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors" id="clearSelectionBtn">
-                <i class="fas fa-times"></i>
-                <span>Limpiar Selección</span>
-              </button>
+          <div class="fixed inset-x-0 bottom-20 lg:bottom-6 z-50 hidden pointer-events-none" id="bulkActions">
+            <div class="container pointer-events-auto">
+              <div class="bg-soft border border-line rounded-lg p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg">
+                <div class="text-lead font-medium">
+                  <span id="selectedCount">0</span> episodios seleccionados
+                </div>
+                <div class="flex gap-3">
+                  <button class="inline-flex items-center gap-2 px-4 py-2 bg-main text-fore font-medium rounded-lg hover:opacity-90 transition-opacity" id="downloadSelectedBtn">
+                    <i class="fas fa-download"></i>
+                    <span>Descargar Seleccionados</span>
+                  </button>
+                  <button class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors" id="clearSelectionBtn">
+                    <i class="fas fa-times"></i>
+                    <span>Limpiar Selección</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         <% } else { %>

@@ -68,6 +68,8 @@ function showEpisodesInRange(start, end) {
     const maxNum = Math.max(...allEpisodes.map(ep => parseInt(ep.number) || 0));
     currentRangeElement.textContent = `${start} - ${Math.min(end, maxNum)}`;
   }
+
+  updateBulkActions();
 }
 
 // Manejar clic en el botón de rango de episodios
@@ -573,4 +575,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const start = minEpisode === 0 ? 0 : 1;
     showEpisodesInRange(start, Math.min(start + 49, maxEpisode));
   }
+
+  updateBulkActions();
 });
