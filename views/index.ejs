@@ -7,66 +7,68 @@
   <!-- Hero Carousel -->
   <% if (featuredAnimes && featuredAnimes.length> 0) { %>
     <section class="relative mb-12 overflow-hidden shadow-2xl border border-line/70 bg-mute/80 backdrop-blur-xl"
-      style="height: 60vh; min-height: 400px;">
-        <div class="flex h-full w-full transform-gpu transition-transform duration-700 ease-in-out" id="carousel-slides">
-          <% featuredAnimes.forEach((anime, index)=> { %>
-            <article class="relative w-full shrink-0 grid items-end text-subs">
-              <div class="container z-20 grid items-start gap-4 pb-24 pt-16">
-                <header class="grid items-start gap-4">
-                  <h1 class="text-4xl font-semibold text-lead">
-                    <%= anime.title %>
-                  </h1>
-                  <div class="flex flex-wrap items-center gap-2 text-sm">
-                    <span>
-                      <%= anime.type || 'TV Anime' %>
-                    </span>
-                    <span>•</span>
-                    <span>
-                      <%= anime.year || new Date().getFullYear() %>
-                    </span>
-                    <span>•</span>
-                    <span
-                      class="<%= anime.status === 'En emisión' ? 'flex gap-2 after:h-1.5 after:w-1.5 after:animate-pulse after:rounded-full after:bg-wins after:ring-4 after:ring-wins/20' : '' %>">
-                      <%= anime.status || 'Desconocido' %>
-                    </span>
-                  </div>
-                  <% if (anime.genres && anime.genres.length> 0) { %>
-                    <div class="flex flex-wrap items-center gap-2">
-                      <% anime.genres.forEach(genre=> { %>
-                        <a class="genre-tag"
-                          href="https://animeav1.com/catalogo?genre=<%= encodeURIComponent(genre.toLowerCase()) %>"
-                          target="_blank">
-                          <%= genre %>
-                        </a>
-                        <% }); %>
+      style="height: 60vh; min-height: 400px;" data-carousel-root>
+        <div class="h-full overflow-hidden cursor-grab focus:outline-none" data-carousel-viewport tabindex="0">
+          <div class="flex h-full w-full" id="carousel-slides">
+            <% featuredAnimes.forEach((anime, index)=> { %>
+              <article class="relative w-full shrink-0 grid items-end text-subs">
+                <div class="container z-20 grid items-start gap-4 pb-24 pt-16">
+                  <header class="grid items-start gap-4">
+                    <h1 class="text-4xl font-semibold text-lead">
+                      <%= anime.title %>
+                    </h1>
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                      <span>
+                        <%= anime.type || 'TV Anime' %>
+                      </span>
+                      <span>•</span>
+                      <span>
+                        <%= anime.year || new Date().getFullYear() %>
+                      </span>
+                      <span>•</span>
+                      <span
+                        class="<%= anime.status === 'En emisión' ? 'flex gap-2 after:h-1.5 after:w-1.5 after:animate-pulse after:rounded-full after:bg-wins after:ring-4 after:ring-wins/20' : '' %>">
+                        <%= anime.status || 'Desconocido' %>
+                      </span>
+                    </div>
+                    <% if (anime.genres && anime.genres.length> 0) { %>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <% anime.genres.forEach(genre=> { %>
+                          <a class="genre-tag"
+                            href="https://animeav1.com/catalogo?genre=<%= encodeURIComponent(genre.toLowerCase()) %>"
+                            target="_blank">
+                            <%= genre %>
+                          </a>
+                          <% }); %>
+                      </div>
+                      <% } %>
+                  </header>
+                  <% if (anime.description) { %>
+                    <div class="max-w-lg text-lead line-clamp-4">
+                      <p>
+                        <%= anime.description %>
+                      </p>
                     </div>
                     <% } %>
-                </header>
-                <% if (anime.description) { %>
-                  <div class="max-w-lg text-lead line-clamp-4">
-                    <p>
-                      <%= anime.description %>
-                    </p>
-                  </div>
-                  <% } %>
-                    <div class="mt-2 flex flex-wrap gap-3">
-                      <a class="btn btn-primary bg-main text-fore border border-main shadow-lg shadow-main/30 hover:bg-tone hover:border-tone hover:text-fore" href="/media/<%= anime.slug %>">
-                        <i class="fas fa-play text-2xl"></i> Ver Anime
-                      </a>
-                    </div>
-              </div>
-              <div class="absolute inset-0 z-10">
-                <figure class="absolute inset-0">
-                  <img class="h-full w-full object-cover" src="<%= anime.backdrop || anime.poster %>"
-                    alt="<%= anime.title %> Backdrop" loading="<%= index === 0 ? 'eager' : 'lazy' %>"
-                    onerror="this.style.display='none'" />
-                  <div class="absolute inset-0 bg-linear-to-r from-body/90 via-body/60 to-transparent"></div>
-                  <div class="absolute inset-0 bg-linear-to-t from-body/80 via-transparent to-transparent"></div>
-                  <div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 30%, rgba(19,19,23,0.4) 70%, rgba(19,19,23,0.8) 100%)"></div>
-                </figure>
-              </div>
-            </article>
-            <% }); %>
+                      <div class="mt-2 flex flex-wrap gap-3">
+                        <a class="btn btn-primary bg-main text-fore border border-main shadow-lg shadow-main/30 hover:bg-tone hover:border-tone hover:text-fore" href="/media/<%= anime.slug %>">
+                          <i class="fas fa-play text-2xl"></i> Ver Anime
+                        </a>
+                      </div>
+                </div>
+                <div class="absolute inset-0 z-10">
+                  <figure class="absolute inset-0">
+                    <img class="h-full w-full object-cover" src="<%= anime.backdrop || anime.poster %>"
+                      alt="<%= anime.title %> Backdrop" loading="<%= index === 0 ? 'eager' : 'lazy' %>"
+                      onerror="this.style.display='none'" />
+                    <div class="absolute inset-0 bg-linear-to-r from-body/90 via-body/60 to-transparent"></div>
+                    <div class="absolute inset-0 bg-linear-to-t from-body/80 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 30%, rgba(19,19,23,0.4) 70%, rgba(19,19,23,0.8) 100%)"></div>
+                  </figure>
+                </div>
+              </article>
+              <% }); %>
+          </div>
         </div>
 
         <% if (featuredAnimes.length> 1) { %>
@@ -159,6 +161,7 @@
 
       <%- include('partials/footer') %>
 
+      <script src="/vendor/embla-carousel.umd.js"></script>
       <script src="/js/index.js"></script>
 
       <!-- Mobile Search Modal -->

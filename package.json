@@ -1,9 +1,11 @@
 {
   "name": "animedownloader",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Anime Downloader - AnimeHub",
   "main": "server.js",
   "scripts": {
+    "sync:vendor": "node scripts/sync-vendor-assets.js",
+    "postinstall": "node scripts/sync-vendor-assets.js",
     "start": "node server.js",
     "dev": "concurrently \"nodemon server.js\" \"tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --watch --minify\"",
     "build:css": "tailwindcss -i ./src/input.css -o ./public/css/tailwind.css --minify",
@@ -19,6 +21,7 @@
     "axios": "^1.13.5",
     "cheerio": "^1.2.0",
     "ejs": "^4.0.1",
+    "embla-carousel": "^8.6.0",
     "express": "^5.2.1"
   },
   "devDependencies": {

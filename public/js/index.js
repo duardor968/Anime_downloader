@@ -68,126 +68,95 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Carousel functionality (reworked)
-  const carouselSlides = document.getElementById('carousel-slides');
-  const prevBtn = document.getElementById('carousel-prev');
-  const nextBtn = document.getElementById('carousel-next');
-  const indicators = document.querySelectorAll('.carousel-indicator');
-  const currentSlideEl = document.getElementById('current-slide');
-  const progressBar = document.getElementById('progress-bar');
+  function initFeaturedCarousel() {
+    const carouselRoot = document.querySelector('[data-carousel-root]');
+    const carouselViewport = carouselRoot?.querySelector('[data-carousel-viewport]');
+    const carouselSlides = document.getElementById('carousel-slides');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    const indicators = Array.from(document.querySelectorAll('.carousel-indicator'));
+    const currentSlideEl = document.getElementById('current-slide');
+    const progressBar = document.getElementById('progress-bar');
+    const emblaFactory = window.EmblaCarousel;
 
-  if (carouselSlides && prevBtn && nextBtn) {
-    const slides = carouselSlides.children;
-    const totalSlides = slides.length;
-    const duration = 6000;
-    let currentSlide = 0;
-    let progressMs = 0;
-    let rafId = null;
-    let lastTime = null;
-    let paused = false;
+    if (!carouselRoot || !carouselViewport || !carouselSlides || typeof emblaFactory !== 'function') {
+      return;
+    }
 
-    function updateIndicators() {
+    const slides = Array.from(carouselSlides.children);
+
+    if (slides.length <= 1) {
+      return;
+    }
+
+    const autoplayDelay = 6000;
+
+    const embla = emblaFactory(carouselViewport, {
+      align: 'start',
+      loop: true,
+      duration: 28
+    });
+
+    let progressAnimationFrame = 0;
+    let cycleStart = null;
+
+    function updateSelectedState() {
+      const selectedIndex = embla.selectedScrollSnap();
+
       indicators.forEach((indicator, index) => {
-        if (index === currentSlide) {
-          indicator.classList.add('bg-white');
-          indicator.classList.remove('bg-white/30');
-        } else {
-          indicator.classList.remove('bg-white');
-          indicator.classList.add('bg-white/30');
-        }
+        const isActive = index === selectedIndex;
+        indicator.classList.toggle('bg-white', isActive);
+        indicator.classList.toggle('bg-white/30', !isActive);
       });
+
       if (currentSlideEl) {
-        currentSlideEl.textContent = currentSlide + 1;
+        currentSlideEl.textContent = String(selectedIndex + 1);
       }
     }
 
-    function applyTransform() {
-      carouselSlides.style.transform = `translateX(-${currentSlide * 100}%)`;
-    }
+    function syncProgress() {
+      progressAnimationFrame = window.requestAnimationFrame(syncProgress);
 
-    function setProgress(value) {
-      progressMs = Math.max(0, Math.min(value, duration));
+      if (cycleStart === null) {
+        cycleStart = performance.now();
+      }
+
+      const elapsed = performance.now() - cycleStart;
+      const progress = Math.max(0, Math.min(1, elapsed / autoplayDelay));
+
       if (progressBar) {
-        progressBar.style.width = `${(progressMs / duration) * 100}%`;
+        progressBar.style.width = `${progress * 100}%`;
       }
-    }
 
-    function goToSlide(index) {
-      currentSlide = (index + totalSlides) % totalSlides;
-      applyTransform();
-      updateIndicators();
-      setProgress(0);
-    }
-
-    function nextSlide() {
-      goToSlide(currentSlide + 1);
-    }
-
-    function prevSlide() {
-      goToSlide(currentSlide - 1);
-    }
-
-    function tick(timestamp) {
-      if (!lastTime) lastTime = timestamp;
-      const delta = timestamp - lastTime;
-      lastTime = timestamp;
-
-      if (!paused && totalSlides > 1) {
-        setProgress(progressMs + delta);
-        if (progressMs >= duration) {
-          nextSlide();
+      if (elapsed >= autoplayDelay) {
+        cycleStart = performance.now();
+        embla.scrollNext();
+        if (progressBar) {
+          progressBar.style.width = '0%';
         }
       }
-
-      rafId = requestAnimationFrame(tick);
     }
 
-    function startAutoPlay() {
-      if (rafId) cancelAnimationFrame(rafId);
-      lastTime = null;
-      paused = false;
-      rafId = requestAnimationFrame(tick);
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        embla.scrollPrev();
+      });
     }
 
-    function pauseAutoPlay() {
-      paused = true;
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        embla.scrollNext();
+      });
     }
-
-    function resumeAutoPlay() {
-      paused = false;
-      lastTime = null;
-    }
-
-    prevBtn.addEventListener('click', () => {
-      prevSlide();
-      resumeAutoPlay();
-    });
-
-    nextBtn.addEventListener('click', () => {
-      nextSlide();
-      resumeAutoPlay();
-    });
 
     indicators.forEach((indicator, index) => {
       indicator.addEventListener('click', () => {
-        goToSlide(index);
-        resumeAutoPlay();
+        embla.scrollTo(index);
       });
     });
 
-    carouselSlides.addEventListener('mouseenter', pauseAutoPlay);
-    carouselSlides.addEventListener('mouseleave', resumeAutoPlay);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        pauseAutoPlay();
-      } else {
-        resumeAutoPlay();
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      const target = e.target;
+    carouselRoot.addEventListener('keydown', (event) => {
+      const target = event.target;
       const isEditable =
         target instanceof HTMLElement &&
         (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -196,21 +165,38 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prevSlide();
-        resumeAutoPlay();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        nextSlide();
-        resumeAutoPlay();
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        embla.scrollPrev();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        embla.scrollNext();
       }
     });
 
-    updateIndicators();
-    setProgress(0);
-    startAutoPlay();
+    embla.on('select', updateSelectedState);
+    embla.on('reInit', updateSelectedState);
+    embla.on('pointerDown', () => {
+      carouselViewport.classList.remove('cursor-grab');
+      carouselViewport.classList.add('cursor-grabbing');
+    });
+    embla.on('pointerUp', () => {
+      carouselViewport.classList.remove('cursor-grabbing');
+      carouselViewport.classList.add('cursor-grab');
+    });
+
+    updateSelectedState();
+    if (progressBar) {
+      progressBar.style.width = '0%';
+    }
+
+    progressAnimationFrame = window.requestAnimationFrame(syncProgress);
+    window.addEventListener('beforeunload', () => {
+      window.cancelAnimationFrame(progressAnimationFrame);
+    }, { once: true });
   }
+
+  initFeaturedCarousel();
 
   // Toast notification function
   function showToast(message, isError = false) {
