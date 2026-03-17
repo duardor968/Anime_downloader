@@ -4,6 +4,9 @@ const path = require('path');
 
 const SUPPORTED_DOWNLOAD_SERVERS = Object.freeze(['mega', 'pixeldrain', 'mp4upload', '1fichier']);
 const DEFAULT_DOWNLOAD_SERVERS = Object.freeze(['mega', 'pixeldrain', 'mp4upload']);
+const DEFAULT_LOCAL_IP = '127.0.0.1';
+const DEFAULT_LOCAL_PORT = 9666;
+const LEGACY_DEPRECATED_API_PORT = 3128;
 
 const DEFAULT_SETTINGS = Object.freeze({
   downloadServers: [...DEFAULT_DOWNLOAD_SERVERS],
@@ -11,8 +14,8 @@ const DEFAULT_SETTINGS = Object.freeze({
   jdownloader: {
     mode: 'local',
     local: {
-      ip: '127.0.0.1',
-      port: 3128
+      ip: DEFAULT_LOCAL_IP,
+      port: DEFAULT_LOCAL_PORT
     },
     web: {
       baseUrl: 'https://api.jdownloader.org',
@@ -92,13 +95,16 @@ function normalizeMode(value) {
 
 function normalizeIp(value) {
   const text = String(value || '').trim();
-  return text || '127.0.0.1';
+  return text || DEFAULT_LOCAL_IP;
 }
 
 function normalizePort(value) {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
-    return 3128;
+    return DEFAULT_LOCAL_PORT;
+  }
+  if (parsed === LEGACY_DEPRECATED_API_PORT) {
+    return DEFAULT_LOCAL_PORT;
   }
   return parsed;
 }
@@ -212,18 +218,21 @@ function mergeSettings(current, patch) {
   return base;
 }
 
-function normalizeSettings(value) {
+function normalizeSettingsDetailed(value) {
   const source = ensureObject(value);
   const merged = mergeSettings(DEFAULT_SETTINGS, source);
   const jdownloader = ensureObject(merged.jdownloader);
   const local = ensureObject(jdownloader.local);
   const web = ensureObject(jdownloader.web);
+  const normalizedMode = normalizeMode(jdownloader.mode);
+  const parsedLocalPort = Number.parseInt(local.port, 10);
+  const migratedFromDeprecatedApi = normalizedMode === 'local' && parsedLocalPort === LEGACY_DEPRECATED_API_PORT;
 
   return {
     downloadServers: normalizeDownloadServers(merged.downloadServers),
     audioPreference: normalizeAudioPreference(merged.audioPreference),
     jdownloader: {
-      mode: normalizeMode(jdownloader.mode),
+      mode: normalizedMode,
       local: {
         ip: normalizeIp(local.ip),
         port: normalizePort(local.port)
@@ -236,8 +245,31 @@ function normalizeSettings(value) {
         deviceId: normalizeOptionalText(web.deviceId),
         deviceName: normalizeOptionalText(web.deviceName)
       }
+    },
+    runtimeInfo: {
+      jdownloader: {
+        local: {
+          migratedFromDeprecatedApi
+        }
+      }
     }
   };
+}
+
+function normalizeSettingsWithMeta(value) {
+  const normalized = normalizeSettingsDetailed(value);
+  return {
+    settings: {
+      downloadServers: normalized.downloadServers,
+      audioPreference: normalized.audioPreference,
+      jdownloader: normalized.jdownloader
+    },
+    runtimeInfo: normalized.runtimeInfo
+  };
+}
+
+function normalizeSettings(value) {
+  return normalizeSettingsWithMeta(value).settings;
 }
 
 function writeJsonAtomic(filePath, value) {
@@ -263,6 +295,13 @@ function writeJsonAtomic(filePath, value) {
 function createSettingsStore(options = {}) {
   const settingsPath = options.settingsPath || getDefaultSettingsPath();
   let cachedSettings = null;
+  let runtimeInfo = {
+    jdownloader: {
+      local: {
+        migratedFromDeprecatedApi: false
+      }
+    }
+  };
 
   function loadSettings() {
     if (!fs.existsSync(settingsPath)) {
@@ -271,9 +310,24 @@ function createSettingsStore(options = {}) {
 
     try {
       const raw = fs.readFileSync(settingsPath, 'utf8');
-      return normalizeSettings(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      const normalized = normalizeSettingsWithMeta(parsed);
+      runtimeInfo = cloneSettings(normalized.runtimeInfo);
+
+      if (JSON.stringify(parsed) !== JSON.stringify(normalized.settings)) {
+        writeJsonAtomic(settingsPath, normalized.settings);
+      }
+
+      return normalized.settings;
     } catch (error) {
       console.warn('[WARN] Failed to parse settings file, using defaults:', error.message);
+      runtimeInfo = {
+        jdownloader: {
+          local: {
+            migratedFromDeprecatedApi: false
+          }
+        }
+      };
       return getDefaultSettings();
     }
   }
@@ -288,22 +342,25 @@ function createSettingsStore(options = {}) {
   function saveSettings(nextValue) {
     const current = getSettings();
     const merged = mergeSettings(current, ensureObject(nextValue));
-    const normalized = normalizeSettings(merged);
-    writeJsonAtomic(settingsPath, normalized);
-    cachedSettings = normalized;
+    const normalized = normalizeSettingsWithMeta(merged);
+    writeJsonAtomic(settingsPath, normalized.settings);
+    cachedSettings = normalized.settings;
+    runtimeInfo = cloneSettings(normalized.runtimeInfo);
     return cloneSettings(cachedSettings);
   }
 
   function replaceSettings(nextValue) {
-    const normalized = normalizeSettings(nextValue);
-    writeJsonAtomic(settingsPath, normalized);
-    cachedSettings = normalized;
+    const normalized = normalizeSettingsWithMeta(nextValue);
+    writeJsonAtomic(settingsPath, normalized.settings);
+    cachedSettings = normalized.settings;
+    runtimeInfo = cloneSettings(normalized.runtimeInfo);
     return cloneSettings(cachedSettings);
   }
 
   return {
     getSettingsPath: () => settingsPath,
     getSettings,
+    getRuntimeInfo: () => cloneSettings(runtimeInfo),
     saveSettings,
     replaceSettings
   };
@@ -317,5 +374,6 @@ module.exports = {
   getDefaultSettingsPath,
   mergeSettings,
   normalizeSettings,
+  normalizeSettingsWithMeta,
   createSettingsStore
 };

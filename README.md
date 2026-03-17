@@ -108,17 +108,21 @@ Desde esa pantalla puedes definir:
   - `MP4Upload`
   - `1Fichier`
 - Modo de conexion JDownloader:
-  - `API local`
+  - `API local oficial`
   - `My.JDownloader web`
 
 > Nota: por compatibilidad, la configuracion inicial mantiene activos `Mega`, `Pixeldrain` y `MP4Upload`. Puedes habilitar `1Fichier` cuando lo necesites.
 
-### Modo API local
+### Modo API local oficial
 
 1. Abre JDownloader 2.
-2. Ve a **Configuracion** -> **Configuracion avanzada**.
-3. Busca `Deprecated Api` y habilita la API local.
-4. Define IP/puerto (por defecto `127.0.0.1:3128`) desde `/settings`.
+2. Asegura que la interfaz local de JDownloader este disponible en `127.0.0.1:9666`.
+3. En `/settings`, deja el modo `API local oficial`.
+4. Usa **Opciones avanzadas** solo si tu instalacion escucha en otra IP/puerto.
+
+Notas:
+- No necesitas activar `Deprecated Api`.
+- Si vienes de una configuracion vieja con `3128`, la app la migra automaticamente a `9666`.
 
 ### Modo My.JDownloader web
 
@@ -304,9 +308,9 @@ node test-simple-proxy.js
 
 ### JDownloader no conecta
 1. Asegura que JDownloader este ejecutandose.
-2. Revisa en `/settings` que el modo seleccionado sea correcto (`API local` o `My.JDownloader web`).
-3. Usa el boton **Probar conexion** y revisa el mensaje devuelto.
-4. En modo local, verifica IP/puerto y que `Deprecated Api` este habilitada.
+2. Revisa en `/settings` que el modo seleccionado sea correcto (`API local oficial` o `My.JDownloader web`).
+3. Usa el boton **Probar conexion local oficial** y revisa el mensaje devuelto.
+4. En modo local, verifica IP/puerto avanzado y que JDownloader responda en `127.0.0.1:9666` con la interfaz `/flash/`.
 5. En modo web, valida email/password y que exista al menos un dispositivo conectado.
 
 ## Licencia

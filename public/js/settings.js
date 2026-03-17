@@ -10,11 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const webDeviceSection = document.getElementById('webDeviceSection');
   const webDeviceTrigger = document.getElementById('webDeviceTrigger');
   const webDeviceMenu = document.getElementById('webDeviceMenu');
+  const localMigrationNotice = document.getElementById('localMigrationNotice');
   const localSettings = document.getElementById('localSettings');
   const webSettings = document.getElementById('webSettings');
 
   const SUPPORTED_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload', '1fichier'];
   const DEFAULT_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload'];
+  const DEFAULT_LOCAL_IP = '127.0.0.1';
+  const DEFAULT_LOCAL_PORT = 9666;
 
   const inputs = {
     audioPreference: () => document.querySelector('input[name="audioPreference"]:checked'),
@@ -33,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let busyCount = 0;
   let validatedWebAccountFingerprint = '';
   let webAccountValidated = false;
+  let currentRuntimeInfo = window.initialRuntimeInfo || {};
 
   function getSelectedMode() {
     const selected = inputs.mode();
@@ -309,15 +313,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function applySettings(settings) {
+  function syncLocalMigrationNotice() {
+    if (!localMigrationNotice) return;
+
+    const migrated = Boolean(currentRuntimeInfo?.jdownloader?.local?.migratedFromDeprecatedApi);
+    localMigrationNotice.classList.toggle('hidden', !migrated);
+    localMigrationNotice.textContent = migrated
+      ? 'Se migro automaticamente la configuracion heredada del Deprecated API (3128) a la interfaz local oficial de JDownloader en 127.0.0.1:9666.'
+      : '';
+  }
+
+  function applySettings(settings, runtimeInfo = currentRuntimeInfo) {
     if (!settings || !settings.jdownloader) return;
+    currentRuntimeInfo = runtimeInfo || {};
 
     setCheckedRadio('audioPreference', settings.audioPreference || 'SUB');
     applyDownloadServerSelection(settings.downloadServers);
     setCheckedRadio('jdownloaderMode', settings.jdownloader.mode || 'local');
 
-    inputs.localIp.value = settings.jdownloader.local?.ip || '127.0.0.1';
-    inputs.localPort.value = settings.jdownloader.local?.port || 3128;
+    inputs.localIp.value = settings.jdownloader.local?.ip || DEFAULT_LOCAL_IP;
+    inputs.localPort.value = settings.jdownloader.local?.port || DEFAULT_LOCAL_PORT;
 
     inputs.webBaseUrl.value = settings.jdownloader.web?.baseUrl || 'https://api.jdownloader.org';
     inputs.webEmail.value = settings.jdownloader.web?.email || '';
@@ -352,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    syncLocalMigrationNotice();
     toggleModePanels();
   }
 
@@ -408,6 +424,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         body: JSON.stringify({ settings })
       });
+
+      if (payload.settings) {
+        applySettings(payload.settings, payload.runtimeInfo);
+      }
 
       showStatus('success', payload.result?.message || 'Conexion local exitosa.');
     } catch (error) {
@@ -513,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (payload.settings) {
-        applySettings(payload.settings);
+        applySettings(payload.settings, payload.runtimeInfo);
       }
 
       showStatus('success', payload.message || 'Configuracion guardada.');
@@ -581,6 +601,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initWebDeviceCustomSelect();
-  applySettings(window.initialSettings || {});
+  applySettings(window.initialSettings || {}, window.initialRuntimeInfo || {});
   toggleModePanels();
 });

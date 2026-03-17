@@ -78,7 +78,7 @@
           <div class="audio-toggle" role="radiogroup" aria-label="Modo JDownloader">
             <label class="audio-choice">
               <input type="radio" name="jdownloaderMode" value="local" <%= settings.jdownloader.mode !== 'web' ? 'checked' : '' %>>
-              <span class="audio-option">API local</span>
+              <span class="audio-option">API local oficial</span>
             </label>
             <label class="audio-choice">
               <input type="radio" name="jdownloaderMode" value="web" <%= settings.jdownloader.mode === 'web' ? 'checked' : '' %>>
@@ -88,33 +88,41 @@
 
           <div class="grid gap-4" id="localSettings">
             <div class="grid gap-2">
-              <label class="text-sm text-subs" for="localIp">IP local</label>
-              <input
-                class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
-                id="localIp"
-                type="text"
-                autocomplete="off"
-                value="<%= settings.jdownloader.local.ip %>"
-                placeholder="127.0.0.1">
+              <p class="text-sm text-subs">Usa la interfaz local oficial de JDownloader en <span class="text-lead font-medium">127.0.0.1:9666</span>. No necesitas activar el Deprecated API.</p>
+              <p class="hidden text-xs text-info border border-line rounded-lg px-3 py-2 bg-soft/50" id="localMigrationNotice"></p>
             </div>
-            <div class="grid gap-2">
-              <label class="text-sm text-subs" for="localPort">Puerto local</label>
-              <input
-                class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
-                id="localPort"
-                type="number"
-                min="1"
-                max="65535"
-                value="<%= settings.jdownloader.local.port %>"
-                placeholder="3128">
-            </div>
+            <details class="grid gap-3 border border-line rounded-xl p-4 bg-soft/40" <%= settings.jdownloader.local.ip !== '127.0.0.1' || settings.jdownloader.local.port !== 9666 ? 'open' : '' %>>
+              <summary class="cursor-pointer text-sm text-lead font-medium">Opciones avanzadas</summary>
+              <p class="text-xs text-subs">Solo cambia estos valores si tu instalacion de JDownloader usa otra IP o puerto local.</p>
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="localIp">IP local</label>
+                <input
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                  id="localIp"
+                  type="text"
+                  autocomplete="off"
+                  value="<%= settings.jdownloader.local.ip %>"
+                  placeholder="127.0.0.1">
+              </div>
+              <div class="grid gap-2">
+                <label class="text-sm text-subs" for="localPort">Puerto local</label>
+                <input
+                  class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+                  id="localPort"
+                  type="number"
+                  min="1"
+                  max="65535"
+                  value="<%= settings.jdownloader.local.port %>"
+                  placeholder="9666">
+              </div>
+            </details>
             <div class="flex flex-wrap gap-3">
               <button
                 class="inline-flex items-center gap-2 px-4 py-2 bg-line text-subs hover:bg-edge hover:text-lead rounded-lg transition-colors"
                 id="testConnectionBtn"
                 type="button">
                 <i class="fas fa-plug"></i>
-                <span>Probar conexion local</span>
+                <span>Probar conexion local oficial</span>
               </button>
             </div>
           </div>
@@ -254,6 +262,7 @@
 
 <script>
   window.initialSettings = <%- JSON.stringify(settings) %>;
+  window.initialRuntimeInfo = <%- JSON.stringify(runtimeInfo || {}) %>;
 </script>
 <script src="/js/settings.js"></script>
 </body>

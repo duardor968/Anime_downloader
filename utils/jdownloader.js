@@ -29,6 +29,11 @@ function normalizeErrorMessage(error, fallbackMessage) {
   return error.message || fallbackMessage;
 }
 
+function isTimeoutError(error) {
+  if (!error) return false;
+  return error.code === 'ECONNABORTED' || /timeout/i.test(String(error.message || ''));
+}
+
 function normalizeDevice(device) {
   const status = String(device && device.status ? device.status : '').trim().toUpperCase();
   const id = String(device && device.id ? device.id : '').trim();
@@ -53,23 +58,78 @@ class LocalApiClient {
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 15000,
-      headers: {
-        'Content-Type': 'application/json'
-      },
       validateStatus: () => true,
       responseType: 'text',
       transformResponse: [data => data]
     });
   }
 
+  buildLocalError(message, code, userMessage, details = {}) {
+    return createJdError(message, {
+      code,
+      userMessage,
+      ...details
+    });
+  }
+
   buildAddLinksPayload(links, packageName) {
     return {
-      links: links.join('\r\n'),
+      urls: links.join('\r\n'),
       packageName: sanitizePackageName(packageName),
-      sourceUrl: 'https://animeav1.com',
-      autostart: false,
-      autoExtract: false
+      source: 'https://animeav1.com'
     };
+  }
+
+  buildAddLinksBody(links, packageName) {
+    const params = new URLSearchParams();
+    params.set('cnl', JSON.stringify(this.buildAddLinksPayload(links, packageName)));
+    return params.toString();
+  }
+
+  async requestHealthcheck() {
+    let response;
+    try {
+      response = await this.api.get('/jdcheckjson');
+    } catch (error) {
+      throw this.buildLocalError(
+        'No se pudo conectar con JDownloader local.',
+        'LOCAL_NETWORK_ERROR',
+        `No se pudo conectar con JDownloader local en ${this.ip}:${this.port}.`
+      );
+    }
+
+    if (response.status >= 200 && response.status < 300) {
+      return safeJsonParse(response.data) || {};
+    }
+
+    throw this.buildLocalError(
+      `El health check local devolvio HTTP ${response.status}.`,
+      'LOCAL_HEALTHCHECK_HTTP_ERROR',
+      `JDownloader respondio de forma invalida en ${this.ip}:${this.port} al comprobar /jdcheckjson.`
+    );
+  }
+
+  async requestFlashInterface() {
+    let response;
+    try {
+      response = await this.api.get('/flash/');
+    } catch (error) {
+      throw this.buildLocalError(
+        'No se pudo comprobar la interfaz local oficial /flash.',
+        'LOCAL_FLASH_NETWORK_ERROR',
+        `JDownloader esta activo, pero no se pudo comprobar la interfaz local oficial /flash en ${this.ip}:${this.port}.`
+      );
+    }
+
+    if (response.status >= 200 && response.status < 300) {
+      return String(response.data || '').trim();
+    }
+
+    throw this.buildLocalError(
+      `La interfaz local oficial /flash devolvio HTTP ${response.status}.`,
+      'LOCAL_FLASH_HTTP_ERROR',
+      `JDownloader esta activo en ${this.ip}:${this.port}, pero la interfaz local oficial /flash no esta disponible.`
+    );
   }
 
   async addLinks(links, packageName) {
@@ -77,59 +137,66 @@ class LocalApiClient {
       return { success: false, message: 'No hay enlaces para enviar a JDownloader' };
     }
 
-    const payload = this.buildAddLinksPayload(links, packageName);
+    const payload = this.buildAddLinksBody(links, packageName);
     let response;
     try {
-      response = await this.api.post('/linkgrabberv2/addLinks', payload);
-    } catch (error) {
-      throw createJdError('No se pudo conectar con JDownloader local.', {
-        code: 'LOCAL_NETWORK_ERROR',
-        userMessage: `No se pudo conectar con JDownloader local en ${this.ip}:${this.port}.`
+      response = await this.api.post('/flash/addcnl', payload, {
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
       });
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        throw this.buildLocalError(
+          'La interfaz local oficial tardo demasiado en responder.',
+          'LOCAL_TIMEOUT',
+          'La interfaz local oficial de JDownloader tardo demasiado en responder. Revisa si JDownloader mostro un aviso para permitir la aplicacion y vuelve a intentarlo.'
+        );
+      }
+
+      throw this.buildLocalError(
+        'No se pudo conectar con la interfaz local oficial de JDownloader.',
+        'LOCAL_NETWORK_ERROR',
+        `No se pudo conectar con la interfaz local oficial de JDownloader en ${this.ip}:${this.port}.`
+      );
     }
 
     if (response.status >= 200 && response.status < 300) {
-      console.log(`[INFO] Added ${links.length} links to local JDownloader (${this.baseURL})`);
-      return { success: true, message: `${links.length} enlaces enviados a JDownloader local` };
+      const result = String(response.data || '').trim().toLowerCase();
+      if (!result || result === 'success') {
+        console.log(`[INFO] Added ${links.length} links to local JDownloader official interface (${this.baseURL})`);
+        return { success: true, message: `${links.length} enlaces enviados a JDownloader local` };
+      }
+
+      throw this.buildLocalError(
+        `La interfaz local oficial rechazo la solicitud (${response.data || 'failed'}).`,
+        'LOCAL_FLASH_REJECTED',
+        'JDownloader rechazo la solicitud en la interfaz local oficial. Revisa si mostro un aviso para permitir la aplicacion y vuelve a intentarlo.'
+      );
     }
 
-    throw createJdError(
-      `Error de API local (HTTP ${response.status})`,
-      {
-        code: 'LOCAL_HTTP_ERROR',
-        userMessage: `No se pudo conectar con JDownloader local en ${this.ip}:${this.port}.`
-      }
+    throw this.buildLocalError(
+      `La interfaz local oficial devolvio HTTP ${response.status}.`,
+      'LOCAL_HTTP_ERROR',
+      `La interfaz local oficial de JDownloader devolvio HTTP ${response.status} en ${this.ip}:${this.port}.`
     );
   }
 
   async testConnection() {
-    let response;
-    try {
-      response = await this.api.get('/jdcheckjson');
-    } catch (error) {
-      throw createJdError('No se pudo conectar con JDownloader local.', {
-        code: 'LOCAL_NETWORK_ERROR',
-        userMessage: `No se pudo conectar con JDownloader local en ${this.ip}:${this.port}.`
-      });
-    }
+    const info = await this.requestHealthcheck();
+    const flashResponse = await this.requestFlashInterface();
 
-    if (response.status >= 200 && response.status < 300) {
-      const info = safeJsonParse(response.data) || {};
-      return {
-        success: true,
-        mode: 'local',
-        message: `Conexion local exitosa en ${this.ip}:${this.port}`,
-        info
-      };
-    }
-
-    throw createJdError(
-      `Error de conexion local (HTTP ${response.status})`,
-      {
-        code: 'LOCAL_HTTP_ERROR',
-        userMessage: `No se pudo conectar con JDownloader local en ${this.ip}:${this.port}.`
+    return {
+      success: true,
+      mode: 'local',
+      message: `Conexion local oficial exitosa en ${this.ip}:${this.port} (/jdcheckjson + /flash).`,
+      info: {
+        ...info,
+        interface: 'flash',
+        flashResponse
       }
-    );
+    };
   }
 }
 

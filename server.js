@@ -47,7 +47,7 @@ const os = require('os');
 const { getRecentAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters } = require('./utils/animeScraper');
 const JDownloaderManager = require('./utils/jdownloader');
 const { getEpisodeDownloadLinks } = require('./utils/episodeParser');
-const { createSettingsStore, mergeSettings, normalizeSettings } = require('./utils/settingsStore');
+const { createSettingsStore, mergeSettings, normalizeSettings, normalizeSettingsWithMeta } = require('./utils/settingsStore');
 const { version } = require('./package.json');
 
 // Detect SEA runtime and prepare embedded assets when available
@@ -101,6 +101,10 @@ function extractSettingsPayload(body) {
     return body.settings;
   }
   return body && typeof body === 'object' ? body : {};
+}
+
+function normalizeMergedSettings(currentSettings, payload) {
+  return normalizeSettingsWithMeta(mergeSettings(currentSettings, payload));
 }
 
 function getWebAccountSnapshot(settings) {
@@ -178,7 +182,8 @@ app.get('/horario', (req, res) => {
 app.get('/settings', (req, res) => {
   try {
     const settings = settingsStore.getSettings();
-    res.render('settings', { settings });
+    const runtimeInfo = settingsStore.getRuntimeInfo();
+    res.render('settings', { settings, runtimeInfo });
   } catch (error) {
     console.error('[ERROR] Failed to render settings page:', error.message);
     res.status(500).render('error', {
@@ -192,7 +197,8 @@ app.get('/api/settings', (req, res) => {
   try {
     res.json({
       success: true,
-      settings: settingsStore.getSettings()
+      settings: settingsStore.getSettings(),
+      runtimeInfo: settingsStore.getRuntimeInfo()
     });
   } catch (error) {
     console.error('[ERROR] Failed to read settings:', error.message);
@@ -204,7 +210,8 @@ app.put('/api/settings', (req, res) => {
   try {
     const currentSettings = settingsStore.getSettings();
     const payload = extractSettingsPayload(req.body);
-    let mergedSettings = normalizeSettings(mergeSettings(currentSettings, payload));
+    const normalized = normalizeMergedSettings(currentSettings, payload);
+    let mergedSettings = normalized.settings;
 
     if (mergedSettings.jdownloader.mode === 'web' && hasWebAccountChanges(currentSettings, mergedSettings)) {
       mergedSettings = resetWebDeviceSelection(mergedSettings);
@@ -214,7 +221,8 @@ app.put('/api/settings', (req, res) => {
     res.json({
       success: true,
       message: 'Configuracion guardada correctamente.',
-      settings: savedSettings
+      settings: savedSettings,
+      runtimeInfo: settingsStore.getRuntimeInfo()
     });
   } catch (error) {
     console.error('[ERROR] Failed to save settings:', error.message);
@@ -229,7 +237,8 @@ app.post('/api/settings/test-connection', async (req, res) => {
   try {
     const currentSettings = settingsStore.getSettings();
     const payload = extractSettingsPayload(req.body);
-    let mergedSettings = normalizeSettings(mergeSettings(currentSettings, payload));
+    const normalized = normalizeMergedSettings(currentSettings, payload);
+    let mergedSettings = normalized.settings;
 
     if (mergedSettings.jdownloader.mode === 'web' && hasWebAccountChanges(currentSettings, mergedSettings)) {
       mergedSettings = resetWebDeviceSelection(mergedSettings);
@@ -246,7 +255,8 @@ app.post('/api/settings/test-connection', async (req, res) => {
     res.json({
       success: true,
       result,
-      settings: mergedSettings
+      settings: mergedSettings,
+      runtimeInfo: normalized.runtimeInfo
     });
   } catch (error) {
     console.error('[ERROR] Settings connection test failed:', error.message);
