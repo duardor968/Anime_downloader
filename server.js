@@ -47,7 +47,15 @@ const os = require('os');
 const { getRecentAnimes, getAnimeDetails, getAvailableFilters, searchAnimesWithFilters } = require('./utils/animeScraper');
 const JDownloaderManager = require('./utils/jdownloader');
 const { getEpisodeDownloadLinks } = require('./utils/episodeParser');
-const { createSettingsStore, mergeSettings, normalizeSettings, normalizeSettingsWithMeta } = require('./utils/settingsStore');
+const {
+  createSettingsStore,
+  mergeSettings,
+  normalizeSettings,
+  normalizeSettingsWithMeta,
+  DEFAULT_DOWNLOAD_CONCURRENCY,
+  MIN_DOWNLOAD_CONCURRENCY,
+  MAX_DOWNLOAD_CONCURRENCY
+} = require('./utils/settingsStore');
 const { version } = require('./package.json');
 
 // Detect SEA runtime and prepare embedded assets when available
@@ -94,6 +102,102 @@ function getRequestedAudioType(audioType, fallbackAudioType) {
     return normalized;
   }
   return fallbackAudioType;
+}
+
+function getDownloadConcurrency(settings) {
+  const parsed = Number.parseInt(settings && settings.downloadConcurrency, 10);
+  if (!Number.isInteger(parsed)) {
+    return DEFAULT_DOWNLOAD_CONCURRENCY;
+  }
+
+  return Math.min(MAX_DOWNLOAD_CONCURRENCY, Math.max(MIN_DOWNLOAD_CONCURRENCY, parsed));
+}
+
+function formatEpisodeProgressMessage({ completed, total, preferredAudioType, concurrency, episode, linksFound }) {
+  const normalizedConcurrency = Math.max(1, Number(concurrency) || 1);
+  const suffix = normalizedConcurrency > 1 ? `, ${normalizedConcurrency} en paralelo` : '';
+  const episodeLabel = episode && episode.number ? ` Episodio ${episode.number}.` : '';
+  const linksLabel = episode && Number.isInteger(linksFound) ? ` ${linksFound} enlace(s).` : '';
+  return `Extrayendo enlaces ${completed}/${total} (${preferredAudioType}${suffix}).${episodeLabel}${linksLabel}`;
+}
+
+async function extractEpisodeLinksBatch(episodes, options = {}) {
+  const safeEpisodes = Array.isArray(episodes) ? episodes : [];
+  const workItems = safeEpisodes
+    .map((episode, originalIndex) => ({ episode, originalIndex }))
+    .filter(({ episode }) => episode && episode.link);
+  const total = workItems.length;
+  const concurrency = Math.max(1, Math.min(Number.parseInt(options.concurrency, 10) || 1, total || 1));
+  const results = Array.from({ length: safeEpisodes.length }, () => []);
+  let nextWorkIndex = 0;
+  let completed = 0;
+  let sharedError = null;
+
+  const reportProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
+  if (reportProgress && total > 0) {
+    reportProgress({
+      completed,
+      total,
+      concurrency,
+      preferredAudioType: options.preferredAudioType,
+      episode: null,
+      linksFound: 0
+    });
+  }
+
+  async function worker() {
+    while (!sharedError) {
+      const currentWorkIndex = nextWorkIndex;
+      if (currentWorkIndex >= total) {
+        return;
+      }
+
+      nextWorkIndex += 1;
+      const current = workItems[currentWorkIndex];
+
+      try {
+        const links = await getEpisodeDownloadLinks(
+          current.episode.link,
+          options.preferredAudioType,
+          options.allowedServers
+        );
+
+        if (sharedError) {
+          return;
+        }
+
+        results[current.originalIndex] = links;
+        completed += 1;
+
+        if (reportProgress) {
+          reportProgress({
+            completed,
+            total,
+            concurrency,
+            preferredAudioType: options.preferredAudioType,
+            episode: current.episode,
+            linksFound: links.length
+          });
+        }
+      } catch (error) {
+        sharedError = error;
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: concurrency }, () => worker())
+  );
+
+  if (sharedError) {
+    throw sharedError;
+  }
+
+  return {
+    total,
+    concurrency,
+    links: results.flat()
+  };
 }
 
 function extractSettingsPayload(body) {
@@ -556,6 +660,8 @@ app.post('/download', async (req, res) => {
   const preferredAudioType = getRequestedAudioType(audioType, settings.audioPreference);
   const allowedServers = Array.isArray(settings.downloadServers) ? settings.downloadServers : undefined;
   const safeEpisodes = Array.isArray(episodes) ? episodes : [];
+  const total = safeEpisodes.filter(ep => ep && ep.link).length;
+  const extractionConcurrency = getDownloadConcurrency(settings);
 
   // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
@@ -563,7 +669,6 @@ app.post('/download', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  const total = safeEpisodes.length;
   const jdownloader = JDownloaderManager.fromSettingsStore(settingsStore);
 
   if (total === 0) {
@@ -574,15 +679,16 @@ app.post('/download', async (req, res) => {
 
   try {
     // --- PASO 1: extraer enlaces ---
-    const allLinks = [];
-    for (let i = 0; i < total; i++) {
-      const ep = safeEpisodes[i];
-      if (!ep || !ep.link) continue;
-      res.write(`data: {"msg":"Extrayendo enlaces ${i + 1}/${total} (${preferredAudioType})","done":false}\n\n`);
-
-      const links = await getEpisodeDownloadLinks(ep.link, preferredAudioType, allowedServers);
-      allLinks.push(...links);
-    }
+    const extraction = await extractEpisodeLinksBatch(safeEpisodes, {
+      preferredAudioType,
+      allowedServers,
+      concurrency: extractionConcurrency,
+      onProgress: (progress) => {
+        const message = formatEpisodeProgressMessage(progress);
+        res.write(`data: ${JSON.stringify({ msg: message, done: false })}\n\n`);
+      }
+    });
+    const allLinks = extraction.links;
 
     if (allLinks.length === 0) {
       res.write('data: {"msg":"No se encontraron enlaces de descarga","done":true}\n\n');

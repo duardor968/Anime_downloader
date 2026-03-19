@@ -4,12 +4,16 @@ const path = require('path');
 
 const SUPPORTED_DOWNLOAD_SERVERS = Object.freeze(['mega', 'pixeldrain', 'mp4upload', '1fichier']);
 const DEFAULT_DOWNLOAD_SERVERS = Object.freeze(['mega', 'pixeldrain', 'mp4upload']);
+const DEFAULT_DOWNLOAD_CONCURRENCY = 4;
+const MIN_DOWNLOAD_CONCURRENCY = 1;
+const MAX_DOWNLOAD_CONCURRENCY = 10;
 const DEFAULT_LOCAL_IP = '127.0.0.1';
 const DEFAULT_LOCAL_PORT = 9666;
 const LEGACY_DEPRECATED_API_PORT = 3128;
 
 const DEFAULT_SETTINGS = Object.freeze({
   downloadServers: [...DEFAULT_DOWNLOAD_SERVERS],
+  downloadConcurrency: DEFAULT_DOWNLOAD_CONCURRENCY,
   audioPreference: 'SUB',
   jdownloader: {
     mode: 'local',
@@ -87,6 +91,15 @@ function normalizeDownloadServers(value) {
   }
 
   return ordered;
+}
+
+function normalizeDownloadConcurrency(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed)) {
+    return DEFAULT_DOWNLOAD_CONCURRENCY;
+  }
+
+  return Math.min(MAX_DOWNLOAD_CONCURRENCY, Math.max(MIN_DOWNLOAD_CONCURRENCY, parsed));
 }
 
 function normalizeMode(value) {
@@ -178,6 +191,10 @@ function mergeSettings(current, patch) {
     base.downloadServers = incoming.downloadServers;
   }
 
+  if (Object.prototype.hasOwnProperty.call(incoming, 'downloadConcurrency')) {
+    base.downloadConcurrency = incoming.downloadConcurrency;
+  }
+
   const incomingJd = ensureObject(incoming.jdownloader);
   base.jdownloader = ensureObject(base.jdownloader);
 
@@ -230,6 +247,7 @@ function normalizeSettingsDetailed(value) {
 
   return {
     downloadServers: normalizeDownloadServers(merged.downloadServers),
+    downloadConcurrency: normalizeDownloadConcurrency(merged.downloadConcurrency),
     audioPreference: normalizeAudioPreference(merged.audioPreference),
     jdownloader: {
       mode: normalizedMode,
@@ -261,6 +279,7 @@ function normalizeSettingsWithMeta(value) {
   return {
     settings: {
       downloadServers: normalized.downloadServers,
+      downloadConcurrency: normalized.downloadConcurrency,
       audioPreference: normalized.audioPreference,
       jdownloader: normalized.jdownloader
     },
@@ -370,6 +389,9 @@ module.exports = {
   DEFAULT_SETTINGS: getDefaultSettings(),
   SUPPORTED_DOWNLOAD_SERVERS: [...SUPPORTED_DOWNLOAD_SERVERS],
   DEFAULT_DOWNLOAD_SERVERS: [...DEFAULT_DOWNLOAD_SERVERS],
+  DEFAULT_DOWNLOAD_CONCURRENCY,
+  MIN_DOWNLOAD_CONCURRENCY,
+  MAX_DOWNLOAD_CONCURRENCY,
   getDefaultSettings,
   getDefaultSettingsPath,
   mergeSettings,

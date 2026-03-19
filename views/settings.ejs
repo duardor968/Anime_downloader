@@ -73,6 +73,24 @@
           <p class="text-xs text-subs">Debe quedar al menos un servidor seleccionado.</p>
         </section>
 
+        <section class="grid gap-3">
+          <h2 class="text-lg font-semibold text-lead">Rendimiento de extraccion</h2>
+          <p class="text-xs text-subs">Controla cuantos episodios se analizan al mismo tiempo en descargas masivas. Usa <span class="text-lead font-medium">1</span> para modo secuencial.</p>
+          <div class="grid gap-2 sm:max-w-xs">
+            <label class="text-sm text-subs" for="downloadConcurrency">Episodios en paralelo</label>
+            <input
+              class="bg-mute border border-line rounded-lg px-3 py-2 text-sm text-lead placeholder-hint focus:border-main focus:outline-none"
+              id="downloadConcurrency"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              value="<%= typeof settings.downloadConcurrency === 'number' ? settings.downloadConcurrency : 4 %>"
+              placeholder="4">
+          </div>
+          <p class="text-xs text-subs">Valores como 3 a 5 suelen acelerar bastante sin castigar tanto el sitio.</p>
+        </section>
+
         <section class="grid gap-4">
           <h2 class="text-lg font-semibold text-lead">JDownloader</h2>
           <div class="audio-toggle" role="radiogroup" aria-label="Modo JDownloader">

@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const SUPPORTED_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload', '1fichier'];
   const DEFAULT_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload'];
+  const DEFAULT_DOWNLOAD_CONCURRENCY = 4;
+  const MIN_DOWNLOAD_CONCURRENCY = 1;
+  const MAX_DOWNLOAD_CONCURRENCY = 10;
   const DEFAULT_LOCAL_IP = '127.0.0.1';
   const DEFAULT_LOCAL_PORT = 9666;
 
@@ -24,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadServers: () => Array.from(document.querySelectorAll('input[name="downloadServers"]:checked'))
       .map(input => input.value),
     mode: () => document.querySelector('input[name="jdownloaderMode"]:checked'),
+    downloadConcurrency: document.getElementById('downloadConcurrency'),
     localIp: document.getElementById('localIp'),
     localPort: document.getElementById('localPort'),
     webBaseUrl: document.getElementById('webBaseUrl'),
@@ -55,6 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     return SUPPORTED_DOWNLOAD_SERVERS.filter(serverId => unique.includes(serverId));
+  }
+
+  function normalizeDownloadConcurrency(value) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isInteger(parsed)) {
+      return DEFAULT_DOWNLOAD_CONCURRENCY;
+    }
+
+    return Math.min(MAX_DOWNLOAD_CONCURRENCY, Math.max(MIN_DOWNLOAD_CONCURRENCY, parsed));
   }
 
   function applyDownloadServerSelection(serverIds) {
@@ -331,6 +344,10 @@ document.addEventListener('DOMContentLoaded', () => {
     applyDownloadServerSelection(settings.downloadServers);
     setCheckedRadio('jdownloaderMode', settings.jdownloader.mode || 'local');
 
+    if (inputs.downloadConcurrency) {
+      inputs.downloadConcurrency.value = normalizeDownloadConcurrency(settings.downloadConcurrency);
+    }
+
     inputs.localIp.value = settings.jdownloader.local?.ip || DEFAULT_LOCAL_IP;
     inputs.localPort.value = settings.jdownloader.local?.port || DEFAULT_LOCAL_PORT;
 
@@ -382,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return {
       downloadServers: selectedDownloadServers,
+      downloadConcurrency: normalizeDownloadConcurrency(inputs.downloadConcurrency?.value),
       audioPreference: audio ? audio.value : 'SUB',
       jdownloader: {
         mode,
@@ -583,6 +601,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('input[name="downloadServers"]').forEach((input) => {
     input.addEventListener('change', () => ensureAtLeastOneDownloadServer(input));
   });
+
+  if (inputs.downloadConcurrency) {
+    inputs.downloadConcurrency.addEventListener('change', () => {
+      inputs.downloadConcurrency.value = normalizeDownloadConcurrency(inputs.downloadConcurrency.value);
+    });
+  }
 
   if (testConnectionBtn) {
     testConnectionBtn.addEventListener('click', testLocalConnection);
