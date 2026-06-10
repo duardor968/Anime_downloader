@@ -1,6 +1,6 @@
 {
   "name": "animedownloader",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Anime Downloader - AnimeHub",
   "main": "server.js",
   "scripts": {
