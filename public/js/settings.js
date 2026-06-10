@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_DOWNLOAD_SERVERS = ['mega', 'pixeldrain', 'mp4upload'];
   const DEFAULT_DOWNLOAD_CONCURRENCY = 4;
   const MIN_DOWNLOAD_CONCURRENCY = 1;
-  const MAX_DOWNLOAD_CONCURRENCY = 10;
+  const MAX_DOWNLOAD_CONCURRENCY = 32;
   const DEFAULT_LOCAL_IP = '127.0.0.1';
   const DEFAULT_LOCAL_PORT = 9666;
 
