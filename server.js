@@ -1,4 +1,6 @@
 // server.js
+require('dotenv').config({ quiet: true });
+
 // Procesar argumentos para proxy personalizado y puerto
 const args = process.argv.slice(2);
 

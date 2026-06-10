@@ -1,6 +1,7 @@
 /.vs
 /node_modules
 /release
+.env
 package-lock.json
 
 tmp_space.zip
