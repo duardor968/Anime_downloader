@@ -73,10 +73,12 @@ class LocalApiClient {
   }
 
   buildAddLinksPayload(links, packageName) {
+    // No enviamos "source": ese campo se convierte en la Origin URL del enlace
+    // y hace que "Abrir/Mostrar enlaces" muestre animeav1 en vez del host real.
+    // Sin source, JD usa la URL del host (mp4upload/mega/...) como Origin.
     return {
       urls: links.join('\r\n'),
-      packageName: sanitizePackageName(packageName),
-      source: 'https://animeav1.com'
+      packageName: sanitizePackageName(packageName)
     };
   }
 
@@ -703,10 +705,11 @@ class MyJdWebClient {
   }
 
   buildAddLinksQuery(links, packageName) {
+    // Omitimos "sourceUrl" (Origin/referer): asi "Abrir/Mostrar enlaces" en JD
+    // muestra el host real (mp4upload/mega/...) y no animeav1.
     return {
       links: links.join('\r\n'),
       packageName: sanitizePackageName(packageName),
-      sourceUrl: 'https://animeav1.com',
       autostart: false,
       autoExtract: false
     };
