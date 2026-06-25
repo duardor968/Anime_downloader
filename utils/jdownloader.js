@@ -145,7 +145,14 @@ class LocalApiClient {
       response = await this.api.post('/flash/addcnl', payload, {
         timeout: 30000,
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          // El Referer es la llave que JD usa en askPermission para su lista
+          // blanca (ExternInterface Authorized Websites). Lo enviamos para que,
+          // tras autorizar animeav1.com una vez, JD deje de pedir permiso en
+          // cada envio. En /flash/addcnl el Referer NO afecta la Origin URL
+          // mostrada (esa sale solo del parametro "source", que omitimos), asi
+          // que seguimos viendo el host real sin reactivar el dialogo.
+          'Referer': 'https://animeav1.com'
         }
       });
     } catch (error) {
